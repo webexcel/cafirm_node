@@ -127,15 +127,15 @@ export const editClient = async (req, res, next) => {
       const { key, value, id } = req.body;
       const { dbname, user_name } = req.user;
   
-      logger.info("Edit Employee Request Received", {
+      logger.info("Edit Client Request Received", {
         username: user_name,
-        reqdetails: "client-editEmployee",
+        reqdetails: "client-editClient",
       });
   
       if (!id || !key || !value) {
-        logger.error("Mandatory fields are missing for Edit Employee", {
+        logger.error("Mandatory fields are missing for Edit Client", {
           username: user_name,
-          reqdetails: "client-editEmployee",
+          reqdetails: "client-editClient",
         });
         return res.status(400).json({
           message: "Mandatory fields are missing",
@@ -145,29 +145,29 @@ export const editClient = async (req, res, next) => {
   
       knex = await createKnexInstance(dbname);
       console.log(key, value);
-      const updateResult = await knex('clients').update({ [key]: value }).where({ employee_id : id });
+      const updateResult = await knex('clients').update({ [key]: value }).where({ client_id : id });
 
       if (updateResult) {
-        logger.info("Employee updated successfully", {
+        logger.info("Client updated successfully", {
           username: user_name,
-          reqdetails: "client-editEmployee",
+          reqdetails: "client-editClient",
         });
         return res.status(200).json({
-          message: "Employee updated successfully",
+          message: "Client updated successfully",
           status: true,
         });
       } else {
-        logger.error("Employee update failed", {
+        logger.error("Client update failed", {
           username: user_name,
-          reqdetails: "client-editEmployee",
+          reqdetails: "client-editClient",
         });
         return res.status(404).json({
-          message: "Employee update failed",
+          message: "Client update failed",
           status: false,
         });
       }
     } catch (error) {
-      console.error("Error updating Employee:", error);
+      console.error("Error updating Client:", error);
       next(error);
     } finally {
       if (knex) {
