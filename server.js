@@ -6,7 +6,7 @@ import mainRoutes from "./src/routes/mainRoute.js";
 import { logger } from "./configs/winston.js";
 import { HttpError } from "./src/models/http-error.js";
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3006;
 
 
 const app = express();
