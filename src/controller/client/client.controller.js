@@ -249,3 +249,63 @@ export const deleteClient = async (req, res, next) => {
       }
     }
 };
+
+export const getClientDetails = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { id } = req.body;
+    const { dbname, user_name } = req.user;
+  
+    logger.info("Get Client Details Request Received", {
+      username: user_name,
+      reqdetails: "employee-getClientDetails",
+    });
+
+    if (!id) {
+      logger.error("Mandatory fields are missing", {
+        username: user_name,
+        reqdetails: "employee-getClientDetails",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+  
+    knex = await createKnexInstance(dbname);
+  
+    const getclientResult = await knex('clients').select('*').where({"status": "0", "client_id": id});
+  
+    if (getclientResult) {
+      logger.info("Client Details retrieved successfully", {
+        username: user_name,
+        reqdetails: "employee-getClientDetails",
+      });
+      return res.status(200).json({
+        message: "Client Details retrieved successfully",
+        data: getclientResult,
+        status: true,
+      });
+    } else {
+      logger.warn("No Client Details found", {
+        username: user_name,
+        reqdetails: "employee-getClientDetails",
+      });
+      return res.status(404).json({
+        message: "No Client Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Client Details", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "employee-getClientDetails",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }  
+};
