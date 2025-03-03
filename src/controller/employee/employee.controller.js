@@ -72,6 +72,23 @@ export const addEmployee = async (req, res, next) => {
       }
   
       knex = await createKnexInstance(dbname);
+
+      const existingEmployee = await knex('employees')
+      .where('name', name)
+      .orWhere('email', email)
+      .orWhere('phone', phone)
+      .first();
+
+    if (existingEmployee) {
+        logger.error("Duplicates in Employee Entry", {
+            username: user_name,
+            reqdetails: "client-addClient",
+          });
+          return res.status(500).json({
+            message: "Duplicates in Employee Entry for Name/Email/Phone",
+            status: false,
+          });
+    }
   
       const insertEmpResult = await knex('employees')
         .insert({

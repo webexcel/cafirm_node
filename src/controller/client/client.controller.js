@@ -72,6 +72,25 @@ export const addClient = async (req, res, next) => {
       }
   
       knex = await createKnexInstance(dbname);
+
+      const existingClient = await knex('clients')
+      .where('email', mail)
+      .orWhere('phone', phone)
+      .orWhere('gst_number', gst_num)
+      .orWhere('pan_number', pan_num)
+      .orWhere('tan_number', tan_num)
+      .first();
+
+    if (existingClient) {
+        logger.error("Duplicates in client Entry", {
+            username: user_name,
+            reqdetails: "client-addClient",
+          });
+          return res.status(500).json({
+            message: "Duplicates in client Entry for Email/Phone/GST Number/PAN Number/TAN Number",
+            status: false,
+          });
+    }
   
       const insertEmpResult = await await knex('clients').insert({
           client_name: name,
