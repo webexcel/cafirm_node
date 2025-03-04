@@ -5,6 +5,8 @@ import clientRoutes from "./client/client.route.js";
 import taskRoutes from "./task/task.route.js";
 import ticketRoutes from "./task/ticket.route.js";
 import tsRoutes from "./task/timesheet.route.js";
+import empTSRoutes from "./timesheet/employee.route.js";
+import clientTSRoutes from "./timesheet/client.route.js";
 
 const mainRoutes = express.Router();
 
@@ -19,5 +21,9 @@ mainRoutes.use("/task", taskRoutes);
 mainRoutes.use("/ticket", ticketRoutes);
 
 mainRoutes.use("/timesheet", tsRoutes);
+
+mainRoutes.use("/empTS", empTSRoutes);
+
+mainRoutes.use("/clientTS", clientTSRoutes);
 
 export default mainRoutes;

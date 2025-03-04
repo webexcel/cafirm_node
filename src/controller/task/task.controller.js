@@ -131,7 +131,7 @@ export const addTask = async (req, res, next) => {
         const insertTaskResult = await await knex('tasks').insert({
             task_name: name,
             service: service,
-            assigned_to: knex.raw('?', [JSON.stringify(assignToArray)]),
+            assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
             assigned_date: assignDate,
             due_date: dueDate,
             priority: priority
