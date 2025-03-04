@@ -41,6 +41,15 @@ export const getTicketsByType = async (req, res, next) => {
         }
 
         const getTaskRes = await query;
+        getTaskRes.forEach(task => {
+            if (typeof task.assigned_to === 'string') {
+                try {
+                    task.assigned_to = JSON.parse(task.assigned_to);
+                } catch (error) {
+                    console.error("Invalid JSON:", task.assigned_to);
+                }
+            }
+        });
 
         if (getTaskRes) {
             logger.info("Tickets List retrieved successfully", {
@@ -100,29 +109,29 @@ export const addTicket = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const existingTicket = await knex('tickets')
-            .where(function () {
-                this.where('ticket_name', name)
-                    .orWhere('assigned_to', assignTo);
-            })
-            .whereIn('status', ['0', '1', '2'])
-            .first();
+        // const existingTicket = await knex('tickets')
+        //     .where(function () {
+        //         this.where('ticket_name', name)
+        //             .orWhere('assigned_to', assignTo);
+        //     })
+        //     .whereIn('status', ['0', '1', '2'])
+        //     .first();
 
-        if (existingTicket) {
-            logger.error("Duplicates in Ticket Entry", {
-                username: user_name,
-                reqdetails: "task-addTicket",
-            });
-            return res.status(500).json({
-                message: "Duplicates in Ticket Entry for Ticket Name/Assigned To.",
-                status: false,
-            });
-        }
+        // if (existingTicket) {
+        //     logger.error("Duplicates in Ticket Entry", {
+        //         username: user_name,
+        //         reqdetails: "task-addTicket",
+        //     });
+        //     return res.status(500).json({
+        //         message: "Duplicates in Ticket Entry for Ticket Name/Assigned To.",
+        //         status: false,
+        //     });
+        // }
 
         const insertTicketResult = await await knex('tickets').insert({
             ticket_name: name,
             service: service,
-            assigned_to: assignTo,
+            assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
             assigned_date: assignDate,
             due_date: dueDate,
             priority: priority
@@ -181,8 +190,12 @@ export const editTicket = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTicketResult = await await knex('tickets').update({ [key]: value }).where({ ticket_id: id });
-
+        let updateTicketResult;
+        if (key == "assigned_to") {
+            updateTicketResult = await knex('tickets').update({ [key]: knex.raw('?', [JSON.stringify(value)]) }).where({ ticket_id: id });
+        } else {
+            updateTicketResult = await knex('tickets').update({ [key]: value }).where({ ticket_id: id });
+        }
         if (updateTicketResult) {
             logger.info("Ticket updated successfully", {
                 username: user_name,

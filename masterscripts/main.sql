@@ -42,3 +42,25 @@ DROP INDEX `email` ;
 
 ALTER TABLE `ca_firm`.`employees` 
 DROP INDEX `email` ;
+
+ALTER TABLE `ca_firm`.`time_sheets` 
+CHANGE COLUMN `notes` `description` TEXT NULL DEFAULT NULL ;
+
+ALTER TABLE time_sheets 
+ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
+
+ALTER TABLE time_sheets 
+MODIFY COLUMN total_hours DECIMAL(5,2);
+
+ALTER TABLE time_sheets 
+DROP COLUMN start_time, 
+DROP COLUMN end_time;
+
+ALTER TABLE time_sheets 
+MODIFY COLUMN total_hours INT;
+
+ALTER TABLE time_sheets CHANGE COLUMN total_hours total_minutes INT;
+ALTER TABLE time_sheets CHANGE COLUMN task_id service_id INT;
+
+ALTER TABLE tasks MODIFY COLUMN assigned_to JSON;
+ALTER TABLE tickets MODIFY COLUMN assigned_to JSON;

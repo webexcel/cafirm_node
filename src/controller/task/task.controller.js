@@ -41,6 +41,15 @@ export const getTasksByType = async (req, res, next) => {
         }
 
         const getTaskRes = await query;
+        getTaskRes.forEach(task => {
+            if (typeof task.assigned_to === 'string') {
+                try {
+                    task.assigned_to = JSON.parse(task.assigned_to);
+                } catch (error) {
+                    console.error("Invalid JSON:", task.assigned_to);
+                }
+            }
+        });
 
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
@@ -100,29 +109,29 @@ export const addTask = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const existingTask = await knex('tasks')
-            .where(function () {
-                this.where('task_name', name)
-                    .orWhere('assigned_to', assignTo);
-            })
-            .whereIn('status', ['0', '1', '2'])
-            .first();
+        // const existingTask = await knex('tasks')
+        //     .where(function () {
+        //         this.where('task_name', name)
+        //             .orWhere('assigned_to', assignTo);
+        //     })
+        //     .whereIn('status', ['0', '1', '2'])
+        //     .first();
 
-        if (existingTask) {
-            logger.error("Duplicates in Task Entry", {
-                username: user_name,
-                reqdetails: "task-addTask",
-            });
-            return res.status(500).json({
-                message: "Duplicates in Task Entry for Task Name/Assigned To.",
-                status: false,
-            });
-        }
+        // if (existingTask) {
+        //     logger.error("Duplicates in Task Entry", {
+        //         username: user_name,
+        //         reqdetails: "task-addTask",
+        //     });
+        //     return res.status(500).json({
+        //         message: "Duplicates in Task Entry for Task Name/Assigned To.",
+        //         status: false,
+        //     });
+        // }
 
         const insertTaskResult = await await knex('tasks').insert({
             task_name: name,
             service: service,
-            assigned_to: assignTo,
+            assigned_to: knex.raw('?', [JSON.stringify(assignToArray)]),
             assigned_date: assignDate,
             due_date: dueDate,
             priority: priority
@@ -180,8 +189,13 @@ export const editTask = async (req, res, next) => {
         }
 
         knex = await createKnexInstance(dbname);
+        let updateTaskResult;
 
-        const updateTaskResult = await await knex('tasks').update({ [key]: value }).where({ task_id: id });
+        if (key == "assigned_to") {
+            updateTaskResult = await knex('tasks').update({ [key]: knex.raw('?', [JSON.stringify(value)]) }).where({ task_id: id });
+        } else {
+            updateTaskResult = await knex('tasks').update({ [key]: value }).where({ task_id: id });
+        }
 
         if (updateTaskResult) {
             logger.info("Task updated successfully", {
