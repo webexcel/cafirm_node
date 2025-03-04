@@ -94,7 +94,7 @@ export const addTimesheet = async (req, res, next) => {
             });
         }
 
-        const insertTSResult = await await knex('time_sheets').insert({
+        const insertTSResult = await knex('time_sheets').insert({
             employee_id: id,
             client_id: clientId,
             service_id: serviceId,
@@ -156,7 +156,7 @@ export const deleteTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTicketResult = await await knex('time_sheets').update({ "status": "1" }).where({ time_sheet_id: id });
+        const updateTicketResult = await knex('time_sheets').update({ "status": "1" }).where({ time_sheet_id: id });
 
         if (updateTicketResult) {
             logger.info("Time-Sheet Status deleted successfully", {

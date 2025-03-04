@@ -95,7 +95,7 @@ export const addClient = async (req, res, next) => {
       });
     }
 
-    const insertEmpResult = await await knex('clients').insert({
+    const insertEmpResult = await knex('clients').insert({
       client_name: name,
       client_type: type,
       contact_person: cont_person,

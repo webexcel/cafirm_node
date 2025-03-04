@@ -128,7 +128,7 @@ export const addTask = async (req, res, next) => {
         //     });
         // }
 
-        const insertTaskResult = await await knex('tasks').insert({
+        const insertTaskResult = await knex('tasks').insert({
             task_name: name,
             service: service,
             assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
@@ -250,7 +250,7 @@ export const taskStatusUpdate = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTaskResult = await await knex('tasks').update({ "status": status }).where({ task_id: id });
+        const updateTaskResult = await knex('tasks').update({ "status": status }).where({ task_id: id });
 
         if (updateTaskResult) {
             logger.info("Task Status updated successfully", {
@@ -305,7 +305,7 @@ export const deleteTask = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTaskResult = await await knex('tasks').update({ "status": "3" }).where({ task_id: id });
+        const updateTaskResult = await knex('tasks').update({ "status": "3" }).where({ task_id: id });
 
         if (updateTaskResult) {
             logger.info("Task Status deleted successfully", {

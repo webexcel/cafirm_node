@@ -128,7 +128,7 @@ export const addTicket = async (req, res, next) => {
         //     });
         // }
 
-        const insertTicketResult = await await knex('tickets').insert({
+        const insertTicketResult = await knex('tickets').insert({
             ticket_name: name,
             service: service,
             assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
@@ -249,7 +249,7 @@ export const ticketStatusUpdate = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTicketResult = await await knex('tickets').update({ "status": status }).where({ ticket_id: id });
+        const updateTicketResult = await knex('tickets').update({ "status": status }).where({ ticket_id: id });
 
         if (updateTicketResult) {
             logger.info("Ticket Status updated successfully", {
@@ -304,7 +304,7 @@ export const deleteTicket = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const updateTicketResult = await await knex('tickets').update({ "status": "3" }).where({ ticket_id: id });
+        const updateTicketResult = await knex('tickets').update({ "status": "3" }).where({ ticket_id: id });
 
         if (updateTicketResult) {
             logger.info("Ticket Status deleted successfully", {
