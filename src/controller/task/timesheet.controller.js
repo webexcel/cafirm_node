@@ -76,9 +76,9 @@ export const addTimesheet = async (req, res, next) => {
         const existingTS = await knex('time_sheets')
             .where(function () {
                 this.where('employee_id', id)
-                    .orWhere('client_id', clientId)
-                    .orWhere('service_id', serviceId)
-                    .orWhere('date', date);
+                    .andWhere('client_id', clientId)
+                    .andWhere('service_id', serviceId)
+                    .andWhere('date', date);
             })
             .where('status', '0')
             .first();

@@ -112,7 +112,7 @@ export const addTask = async (req, res, next) => {
         // const existingTask = await knex('tasks')
         //     .where(function () {
         //         this.where('task_name', name)
-        //             .orWhere('assigned_to', assignTo);
+        //             .andWhere('assigned_to', assignTo);
         //     })
         //     .whereIn('status', ['0', '1', '2'])
         //     .first();

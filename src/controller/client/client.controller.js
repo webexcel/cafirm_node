@@ -76,10 +76,10 @@ export const addClient = async (req, res, next) => {
     const existingClient = await knex('clients')
       .where(function () {
         this.where('email', mail)
-          .orWhere('phone', phone)
-          .orWhere('gst_number', gst_num)
-          .orWhere('pan_number', pan_num)
-          .orWhere('tan_number', tan_num);
+          .andWhere('phone', phone)
+          .andWhere('gst_number', gst_num)
+          .andWhere('pan_number', pan_num)
+          .andWhere('tan_number', tan_num);
       })
       .andWhere('status', '0')
       .first();

@@ -76,8 +76,8 @@ export const addEmployee = async (req, res, next) => {
     const existingEmployee = await knex('employees')
       .where(function () {
         this.where('name', name)
-          .orWhere('email', email)
-          .orWhere('phone', phone)
+          .andWhere('email', email)
+          .andWhere('phone', phone)
       })
       .andWhere('status', '0')
       .first();

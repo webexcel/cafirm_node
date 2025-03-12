@@ -112,7 +112,7 @@ export const addTicket = async (req, res, next) => {
         // const existingTicket = await knex('tickets')
         //     .where(function () {
         //         this.where('ticket_name', name)
-        //             .orWhere('assigned_to', assignTo);
+        //             .andWhere('assigned_to', assignTo);
         //     })
         //     .whereIn('status', ['0', '1', '2'])
         //     .first();
