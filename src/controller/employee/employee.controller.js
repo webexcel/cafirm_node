@@ -154,7 +154,7 @@ export const editEmployee = async (req, res, next) => {
     }
 
     knex = await createKnexInstance(dbname);
-    console.log(key, value);
+    
     const updateResult = await knex("employees").update({ [key]: value }).where({ employee_id: id });
 
     if (updateResult) {

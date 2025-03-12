@@ -66,3 +66,13 @@ ALTER TABLE tasks MODIFY COLUMN assigned_to JSON;
 ALTER TABLE tickets MODIFY COLUMN assigned_to JSON;
 
 ALTER TABLE ca_firm.time_sheets DROP FOREIGN KEY time_sheets_ibfk_3;
+
+ALTER TABLE `ca_firm`.`time_sheets`
+ADD COLUMN `employee` VARCHAR(200) AFTER `employee_id`,
+ADD COLUMN `client` VARCHAR(200) AFTER `client_id`,
+ADD COLUMN `service` VARCHAR(200) AFTER `service_id`;
+
+ALTER TABLE ca_firm.services
+DROP COLUMN service_fee,
+DROP COLUMN gst_rate,
+ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
