@@ -76,3 +76,22 @@ ALTER TABLE ca_firm.services
 DROP COLUMN service_fee,
 DROP COLUMN gst_rate,
 ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
+
+CREATE TABLE employee_monitor (
+    monitor_id      INT AUTO_INCREMENT PRIMARY KEY,
+    task_name       VARCHAR(255) NOT NULL,
+    employee_id     INT NOT NULL,
+    employee_name   VARCHAR(200) NOT NULL,
+    client_id       INT NOT NULL,
+    client_name     VARCHAR(200) NOT NULL,
+    service_id      INT NOT NULL,
+    service_name    VARCHAR(255) NOT NULL,
+    description     TEXT NULL,
+    assigned_to     INT NULL DEFAULT NULL,
+    assigned_date   DATE NULL,
+    total_minutes   INT NULL,
+    due_date        DATE NULL,
+    priority        ENUM('Low', 'Medium', 'High', 'Critical') DEFAULT 'Low',
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status         ENUM('0', '1', '2', '3') DEFAULT '0'
+);
