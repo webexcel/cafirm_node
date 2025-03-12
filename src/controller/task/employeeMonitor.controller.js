@@ -88,7 +88,7 @@ export const getAllEmployeeRecords = async (req, res, next) => {
 export const addRecord = async (req, res, next) => {
     let knex = null;
     try {
-        const { task_name, emp_id, emp_name, client_id, client_name, service_id, service_name, description, assignTo, assignDate, dueDate, priority } = req.body;
+        const { task_name, emp_id, emp_name, client_id, client_name, service_id, service_name, description, assignTo, assignDate, minutes, dueDate, priority } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Record Request Received", {
@@ -96,7 +96,7 @@ export const addRecord = async (req, res, next) => {
             reqdetails: "task-addRecord",
         });
 
-        if (!task_name || task_name.trim() === "" || !emp_id || !client_id || !service_id || !priority || !assignTo) {
+        if (!task_name || task_name.trim() === "" || !emp_id || !client_id || !service_id || !priority || !assignTo || !minutes) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addRecord",
@@ -120,6 +120,7 @@ export const addRecord = async (req, res, next) => {
             description: description,
             assigned_to: assign,
             assigned_date: assignDate,
+            total_minutes: minutes,
             due_date: dueDate,
             priority: priority
         }));
