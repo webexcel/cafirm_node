@@ -82,3 +82,11 @@ ADD COLUMN `client_id` INT AFTER `task_id`;
 
 ALTER TABLE `ca_firm`.`tasks` 
 CHANGE COLUMN `service` `service` INT NULL DEFAULT NULL ;
+
+CREATE TABLE employee_task_mapping (
+mapping_id INT AUTO_INCREMENT PRIMARY KEY,
+employee_id INT NOT NULL,
+task_id INT NOT NULL,
+status ENUM('0', '1') DEFAULT '0',
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
