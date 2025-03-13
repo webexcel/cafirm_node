@@ -468,17 +468,6 @@ export const getViewTasks = async (req, res, next) => {
             reqdetails: "task-getViewTasks",
         });
 
-        // if (!id || !status) {
-        //     logger.error("Mandatory fields are missing", {
-        //         username: user_name,
-        //         reqdetails: "task-getViewTasks",
-        //     });
-        //     return res.status(400).json({
-        //         message: "Mandatory fields are missing",
-        //         status: false,
-        //     });
-        // }
-
         knex = await createKnexInstance(dbname);
 
         let query = knex('tasks').select("*");
@@ -514,11 +503,27 @@ export const getViewTasks = async (req, res, next) => {
                 const mappedEmployeeIds = mappedData.map(data => data.employee_id);
 
                 if (mappedEmployeeIds.includes(emp_id)) {
+                    task["assignTo"] = emp_id;
                     filteredTasks.push(task);
                 }
             }
 
             viewTaskResult = filteredTasks;
+        }
+
+        for (const task of viewTaskResult) {
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.assignTo }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service }).first();
+            task["service_name"] = service?.service_name || null;
         }
 
         if (viewTaskResult) {
