@@ -4,7 +4,7 @@ import { logger } from "../../../configs/winston.js";
 export const getTasksByType = async (req, res, next) => {
     let knex = null;
     try {
-        const { showType } = req.body;
+        const { showType, client_id, employee_id } = req.body;
         const { dbname, user_name } = req.user;
 
         const statusMap = {
@@ -32,24 +32,37 @@ export const getTasksByType = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('tasks').select('*');
+        let query = knex('tasks')
+            .select('tasks.*')
+            .orderByRaw("FIELD(tasks.priority, 'Critical', 'High', 'Medium', 'Low')");
 
-        if (statusMap[showType] !== null) {
-            query = query.where('status', statusMap[showType]);
+        if (statusMap[showType] !== null && statusMap[showType] !== undefined) {
+            query = query.where('tasks.status', statusMap[showType]);
         } else {
-            query = query.whereIn('status', ['0', '1', '2']);
+            query = query.whereIn('tasks.status', ['0', '1', '2']);
+        }
+
+        if (client_id) {
+            query = query.where('tasks.client_id', client_id);
+        }
+
+        if (employee_id) {
+            query = query
+                .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
+                .where('employee_task_mapping.employee_id', employee_id)
+                .distinct('tasks.task_id');
         }
 
         const getTaskRes = await query;
-        getTaskRes.forEach(task => {
-            if (typeof task.assigned_to === 'string') {
-                try {
-                    task.assigned_to = JSON.parse(task.assigned_to);
-                } catch (error) {
-                    console.error("Invalid JSON:", task.assigned_to);
-                }
-            }
-        });
+
+
+        for (const task of getTaskRes) {
+            const mappedData = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: task.task_id });
+
+            task["assigned_to"] = mappedData.map(data => data.employee_id);
+        }
 
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
@@ -88,7 +101,7 @@ export const getTasksByType = async (req, res, next) => {
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { name, service, assignTo, assignDate, dueDate, priority } = req.body;
+        const { client, name, service, assignTo, assignDate, dueDate, priority } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Task Request Received", {
@@ -96,7 +109,7 @@ export const addTask = async (req, res, next) => {
             reqdetails: "task-addTask",
         });
 
-        if (!name || !priority || !assignTo) {
+        if (!client || !name || !priority || !assignTo) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addTask",
@@ -109,29 +122,10 @@ export const addTask = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        // const existingTask = await knex('tasks')
-        //     .where(function () {
-        //         this.where('task_name', name)
-        //             .andWhere('assigned_to', assignTo);
-        //     })
-        //     .whereIn('status', ['0', '1', '2'])
-        //     .first();
-
-        // if (existingTask) {
-        //     logger.error("Duplicates in Task Entry", {
-        //         username: user_name,
-        //         reqdetails: "task-addTask",
-        //     });
-        //     return res.status(500).json({
-        //         message: "Duplicates in Task Entry for Task Name/Assigned To.",
-        //         status: false,
-        //     });
-        // }
-
         const insertTaskResult = await knex('tasks').insert({
+            client_id: client,
             task_name: name,
             service: service,
-            assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
             assigned_date: assignDate,
             due_date: dueDate,
             priority: priority
@@ -142,10 +136,32 @@ export const addTask = async (req, res, next) => {
                 username: user_name,
                 reqdetails: "task-addTask",
             });
-            return res.status(200).json({
-                message: "Task inserted successfully",
-                status: true,
-            });
+
+            const insertMapData = assignTo.map(data => ({
+                employee_id: data,
+                task_id: insertTaskResult[0]
+            }));
+
+            const mapRes = await knex("employee_task_mapping").insert(insertMapData);
+            if (mapRes) {
+                logger.info("Task inserted successfully", {
+                    username: user_name,
+                    reqdetails: "task-addTask",
+                });
+                return res.status(200).json({
+                    message: "Task inserted successfully",
+                    status: true,
+                });
+            } else {
+                logger.error("Failed to insert Task Mapping", {
+                    username: user_name,
+                    reqdetails: "task-addTask",
+                });
+                return res.status(500).json({
+                    message: "Failed to insert Task Mapping",
+                    status: false,
+                });
+            }
         } else {
             logger.error("Failed to insert Task", {
                 username: user_name,
@@ -192,7 +208,34 @@ export const editTask = async (req, res, next) => {
         let updateTaskResult;
 
         if (key == "assigned_to") {
-            updateTaskResult = await knex('tasks').update({ [key]: knex.raw('?', [JSON.stringify(value)]) }).where({ task_id: id });
+            //need to change
+            // updateTaskResult = await knex('tasks').update({ [key]: knex.raw('?', [JSON.stringify(value)]) }).where({ task_id: id });
+            const existingMappings = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: id });
+
+            const existingEmployeeIds = existingMappings.map(row => row.employee_id);
+
+            const employeesToInsert = value.filter(empId => !existingEmployeeIds.includes(empId));
+
+            const employeesToUpdate = existingEmployeeIds.filter(empId => !value.includes(empId));
+
+            if (employeesToInsert.length > 0) {
+                const insertData = employeesToInsert.map(empId => ({
+                    task_id: id,
+                    employee_id: empId,
+                }));
+
+                await knex("employee_task_mapping").insert(insertData);
+            }
+
+            if (employeesToUpdate.length > 0) {
+                await knex("employee_task_mapping")
+                    .where({ task_id: id })
+                    .whereIn("employee_id", employeesToUpdate)
+                    .update({ status: "1" });
+            }
+            updateTaskResult = [];
         } else {
             updateTaskResult = await knex('tasks').update({ [key]: value }).where({ task_id: id });
         }
