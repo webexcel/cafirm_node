@@ -22,7 +22,7 @@ export const login = async (req, res, next) => {
 
     const knex = await createKnexInstance();
     const loginData = await knex("employees")
-      .select("employee_id", "name", "email", "phone")
+      .select("employee_id", "name", "email", "phone", "role")
       .where({ email, password_hash: password });
 
     if (loginData.length > 0) {
@@ -31,8 +31,8 @@ export const login = async (req, res, next) => {
         reqdetails: "login",
       });
 
-      const { employee_id, email: userEmail, name } = loginData[0];
-      const userdata = { employee_id, email: userEmail, name };
+      const { employee_id, email: userEmail, name, role } = loginData[0];
+      const userdata = { employee_id, email: userEmail, name, role: role };
 
       const token = generateAccessToken(userdata);
       logger.info("Logged in Successfully", {
