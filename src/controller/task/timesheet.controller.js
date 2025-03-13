@@ -378,3 +378,81 @@ export const deleteTimesheet = async (req, res, next) => {
         }
     }
 };
+
+export const viewTimesheet = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+        const { emp_id, client_id, service_id, startdate, enddate } = req.body;
+
+        logger.info("Get Time-Sheet List Request Received", {
+            username: user_name,
+            reqdetails: "task-getTimesheet",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        let query = knex('time_sheets').select('*').where('status', '0').whereBetween('date', [startdate, enddate]);
+
+        if (client_id && client_id != "All") {
+            query = query.where('time_sheets.client_id', client_id);
+        }
+
+        if (service_id && service_id != "All") {
+            query = query.where('time_sheets.service_id', service_id);
+        }
+
+        if (emp_id && emp_id != "All") {
+            query = query.where('time_sheets.employee_id', emp_id);
+        }
+
+        const getTSRes = await query;
+
+        for (const task of getTSRes) {
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.employee_id }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service_id }).first();
+            task["service_name"] = service?.service_name || null;
+        }
+
+        if (getTSRes) {
+            logger.info("Time-Sheet List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getTimesheet",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet List retrieved successfully",
+                data: getTSRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Details found", {
+                username: user_name,
+                reqdetails: "task-getTimesheet",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getTimesheet",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};

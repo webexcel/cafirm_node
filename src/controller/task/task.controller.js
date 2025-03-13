@@ -449,3 +449,104 @@ export const deleteTask = async (req, res, next) => {
         }
     }
 };
+
+export const getViewTasks = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { cleint_id, service_id, emp_id, priority, status } = req.body;
+        const { dbname, user_name } = req.user;
+
+        const statusMap = {
+            'ALL': null,
+            'PENDING': '0',
+            'INPROCESS': '1',
+            'COMPLETED': '2'
+        };
+
+        logger.info("Get View Task List Request Received", {
+            username: user_name,
+            reqdetails: "task-getViewTasks",
+        });
+
+        // if (!id || !status) {
+        //     logger.error("Mandatory fields are missing", {
+        //         username: user_name,
+        //         reqdetails: "task-getViewTasks",
+        //     });
+        //     return res.status(400).json({
+        //         message: "Mandatory fields are missing",
+        //         status: false,
+        //     });
+        // }
+
+        knex = await createKnexInstance(dbname);
+
+        let query = knex('tasks').select("*");
+
+        if (cleint_id && cleint_id != "All") {
+            query = query.where('tasks.client_id', cleint_id);
+        }
+
+        if (service_id && service_id != "All") {
+            query = query.where('tasks.service', service_id);
+        }
+
+        if (priority && priority != "All") {
+            query = query.where('tasks.priority', priority);
+        }
+
+        if (statusMap[status] !== null && statusMap[status] !== undefined) {
+            query = query.where('tasks.status', statusMap[showType]);
+        } else {
+            query = query.whereIn('tasks.status', ['0', '1', '2']);
+        }
+
+        let viewTaskResult = await query;
+
+        if (emp_id && emp_id != "All") {
+            let filteredTasks = [];
+
+            for (const task of viewTaskResult) {
+                const mappedData = await knex("employee_task_mapping")
+                    .select("employee_id")
+                    .where({ task_id: task.task_id });
+
+                const mappedEmployeeIds = mappedData.map(data => data.employee_id);
+
+                if (mappedEmployeeIds.includes(emp_id)) {
+                    filteredTasks.push(task);
+                }
+            }
+
+            viewTaskResult = filteredTasks;
+        }
+
+        if (viewTaskResult) {
+            logger.info("View Task List Fetched Successfully", {
+                username: user_name,
+                reqdetails: "task-getViewTasks",
+            });
+            return res.status(200).json({
+                message: "View Task List Fetched Successfully",
+                status: true,
+                data: viewTaskResult
+            });
+        } else {
+            logger.error("Failed to fetch View Task List", {
+                username: user_name,
+                reqdetails: "task-getViewTasks",
+            });
+            return res.status(500).json({
+                message: "Failed to fetch View Task List",
+                status: false,
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching View Task List:", error);
+        next(error);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
