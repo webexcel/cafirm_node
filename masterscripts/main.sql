@@ -93,3 +93,8 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
 
 ALTER TABLE `ca_firm`.`time_sheets`
 ADD COLUMN `task_id` INT AFTER `service_id`;
+
+ALTER TABLE time_sheets 
+DROP COLUMN employee,
+DROP COLUMN client,
+DROP COLUMN service;

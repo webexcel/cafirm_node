@@ -116,6 +116,59 @@ export const getTasksByType = async (req, res, next) => {
     }
 };
 
+export const getTasksByPriority = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Task List Request Received", {
+            username: user_name,
+            reqdetails: "task-getTasks",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        let getTaskRes = await knex('tasks')
+            .select('*')
+            .where('due_date', '>=', new Date())
+            .orderByRaw("FIELD(priority, 'Critical', 'High', 'Medium', 'Low')")
+            .orderBy('due_date', 'asc')
+            .limit(5);
+
+        if (getTaskRes) {
+            logger.info("Tasks List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getTasks",
+            });
+            return res.status(200).json({
+                message: "Tasks List retrieved successfully",
+                data: getTaskRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Tasks Details found", {
+                username: user_name,
+                reqdetails: "task-getTasks",
+            });
+            return res.status(404).json({
+                message: "No Tasks Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Tasks List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getTasks",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {

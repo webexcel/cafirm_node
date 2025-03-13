@@ -166,7 +166,7 @@ export const editClient = async (req, res, next) => {
     }
 
     knex = await createKnexInstance(dbname);
-    console.log(key, value);
+    
     const updateResult = await knex('clients').update({ [key]: value }).where({ client_id: id });
 
     if (updateResult) {
