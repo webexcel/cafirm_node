@@ -77,25 +77,27 @@ DROP COLUMN service_fee,
 DROP COLUMN gst_rate,
 ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
 
-CREATE TABLE employee_monitor (
-    monitor_id      INT AUTO_INCREMENT PRIMARY KEY,
-    task_name       VARCHAR(255) NOT NULL,
-    employee_id     INT NOT NULL,
-    employee_name   VARCHAR(200) NOT NULL,
-    client_id       INT NOT NULL,
-    client_name     VARCHAR(200) NOT NULL,
-    service_id      INT NOT NULL,
-    service_name    VARCHAR(255) NOT NULL,
-    description     TEXT NULL,
-    assigned_to     INT NULL DEFAULT NULL,
-    assigned_date   DATE NULL,
-    total_minutes   INT NULL,
-    due_date        DATE NULL,
-    priority        ENUM('Low', 'Medium', 'High', 'Critical') DEFAULT 'Low',
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status         ENUM('0', '1', '2', '3') DEFAULT '0'
-);
+ALTER TABLE `ca_firm`.`tasks`
+ADD COLUMN `client_id` INT AFTER `task_id`;
 
+ALTER TABLE `ca_firm`.`tasks` 
+CHANGE COLUMN `service` `service` INT NULL DEFAULT NULL ;
+
+CREATE TABLE employee_task_mapping (
+mapping_id INT AUTO_INCREMENT PRIMARY KEY,
+employee_id INT NOT NULL,
+task_id INT NOT NULL,
+status ENUM('0', '1') DEFAULT '0',
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+
+ALTER TABLE `ca_firm`.`time_sheets`
+ADD COLUMN `task_id` INT AFTER `service_id`;
+
+ALTER TABLE time_sheets 
+DROP COLUMN employee,
+DROP COLUMN client,
+DROP COLUMN service;
 ------ Permission Table Changes -----------------------
 
 CREATE TABLE tbl_menus (

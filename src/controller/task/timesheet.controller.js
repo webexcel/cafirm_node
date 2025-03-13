@@ -13,16 +13,31 @@ export const getTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTaskRes = await knex('time_sheets').select('*').where('status', '0');;
+        const getTSRes = await knex('time_sheets').select('*').where('status', '0');
 
-        if (getTaskRes) {
+        for (const task of getTSRes) {
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.employee_id }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service_id }).first();
+            task["service_name"] = service?.service_name || null;
+        }
+
+        if (getTSRes) {
             logger.info("Time-Sheet List retrieved successfully", {
                 username: user_name,
                 reqdetails: "task-getTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet List retrieved successfully",
-                data: getTaskRes,
+                data: getTSRes,
                 status: true,
             });
         } else {
@@ -49,10 +64,186 @@ export const getTimesheet = async (req, res, next) => {
     }
 };
 
+export const getService = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+        const { client_id } = req.body;
+
+        logger.info("Get Time-Sheet Service List Request Received", {
+            username: user_name,
+            reqdetails: "task-getService",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
+        const uniqueServices = [...new Set(getTaskRes.map(task => task.service))];
+
+        const getTSRes = await knex('services').select('service_id', 'service_name').where({ 'status': '0' }).whereIn("service_id", uniqueServices);
+
+        if (getTSRes) {
+            logger.info("Time-Sheet Service List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getService",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet Service List retrieved successfully",
+                data: getTSRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Service Details found", {
+                username: user_name,
+                reqdetails: "task-getService",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Service Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet Service List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getService",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getemployee = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+        const { client_id, service_id } = req.body;
+
+        logger.info("Get Time-Sheet Employee List Request Received", {
+            username: user_name,
+            reqdetails: "task-getemployee",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id, 'service': service_id });
+        let allEmployeeIds = new Set();
+        for (const task of getTaskRes) {
+            const mappedEmployees = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: task.task_id });
+
+            mappedEmployees.forEach(emp => allEmployeeIds.add(emp.employee_id));
+        }
+
+        const empListRes = await knex("employees").select("employee_id", "name").whereIn("employee_id", Array.from(allEmployeeIds))
+
+        if (empListRes) {
+            logger.info("Time-Sheet Employee List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getemployee",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet Employee List retrieved successfully",
+                data: empListRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Employee Details found", {
+                username: user_name,
+                reqdetails: "task-getemployee",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Employee Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet Employee List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getemployee",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getTaskList = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+        const { client_id, service_id, emp_id } = req.body;
+
+        logger.info("Get Time-Sheet Employee List Request Received", {
+            username: user_name,
+            reqdetails: "task-getemployee",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getTaskRes = await knex('tasks').select('task_id', 'task_name').where({ 'status': '0', 'client_id': client_id, 'service': service_id });
+        
+        let allEmployeeIds = new Set();
+        let filteredTasks = [];
+
+        for (const task of getTaskRes) {
+            const mappedEmployees = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: task.task_id, status: '0' });
+
+            const employeeIds = mappedEmployees.map(emp => emp.employee_id);
+            if (employeeIds.includes(emp_id)) {
+                filteredTasks.push(task);
+            }
+
+            employeeIds.forEach(id => allEmployeeIds.add(id));
+        }
+
+        if (filteredTasks) {
+            logger.info("Time-Sheet Employee List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getemployee",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet Employee List retrieved successfully",
+                data: filteredTasks,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Employee Details found", {
+                username: user_name,
+                reqdetails: "task-getemployee",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Employee Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet Employee List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getemployee",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const addTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, emp_name, clientId, client, serviceId, serviceName, date, totalMinutes, description } = req.body;
+        const { emp_id, clientId, serviceId, task_id, date, totalMinutes, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Time-Sheet Request Received", {
@@ -96,11 +287,9 @@ export const addTimesheet = async (req, res, next) => {
 
         const insertTSResult = await knex('time_sheets').insert({
             employee_id: emp_id,
-            employee: emp_name,
             client_id: clientId,
-            client: client,
             service_id: serviceId,
-            service: serviceName,
+            task_id: task_id,
             date: date,
             total_minutes: totalMinutes,
             description: description
@@ -183,6 +372,84 @@ export const deleteTimesheet = async (req, res, next) => {
     } catch (error) {
         console.error("Error deleting Time-Sheet Status:", error);
         next(error);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const viewTimesheet = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+        const { emp_id, client_id, service_id, startdate, enddate } = req.body;
+
+        logger.info("Get Time-Sheet List Request Received", {
+            username: user_name,
+            reqdetails: "task-getTimesheet",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        let query = knex('time_sheets').select('*').where('status', '0').whereBetween('date', [startdate, enddate]);
+
+        if (client_id && client_id != "All") {
+            query = query.where('time_sheets.client_id', client_id);
+        }
+
+        if (service_id && service_id != "All") {
+            query = query.where('time_sheets.service_id', service_id);
+        }
+
+        if (emp_id && emp_id != "All") {
+            query = query.where('time_sheets.employee_id', emp_id);
+        }
+
+        const getTSRes = await query;
+
+        for (const task of getTSRes) {
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.employee_id }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service_id }).first();
+            task["service_name"] = service?.service_name || null;
+        }
+
+        if (getTSRes) {
+            logger.info("Time-Sheet List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getTimesheet",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet List retrieved successfully",
+                data: getTSRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Details found", {
+                username: user_name,
+                reqdetails: "task-getTimesheet",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getTimesheet",
+        });
+        next(err);
     } finally {
         if (knex) {
             knex.destroy();

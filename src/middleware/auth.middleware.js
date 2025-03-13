@@ -16,7 +16,6 @@ export const generateRefreshToken = (user) => {
 export const validateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  console.log("tokennnn", token);
 
   if (token == null) {
     return res.status(400).send("Token not present");
@@ -73,7 +72,6 @@ export const refreshToken = async (req, res) => {
                 .update({
                   acesstoken: accessToken,
                 });
-              console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", userData);
               return res.status(200).json({
                 token: accessToken,
                 messages: "new access token generated successfully",
