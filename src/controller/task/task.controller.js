@@ -286,7 +286,7 @@ export const addTask = async (req, res, next) => {
 export const editTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description } = req.body;
+        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description, status } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Task Request Received", {
@@ -311,7 +311,8 @@ export const editTask = async (req, res, next) => {
             assigned_date: assignDate,
             due_date: dueDate,
             priority: priority,
-            description: description
+            description: description,
+            status: status
         }).where({ task_id: task_id });
 
         const existingMappings = await knex("employee_task_mapping")
