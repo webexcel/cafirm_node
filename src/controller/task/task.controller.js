@@ -286,7 +286,7 @@ export const addTask = async (req, res, next) => {
 export const editTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { key, value, id } = req.body;
+        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Task Request Received", {
@@ -294,7 +294,7 @@ export const editTask = async (req, res, next) => {
             reqdetails: "task-editTask",
         });
 
-        if (!id || !key || !value) {
+        if (!task_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-editTask",
@@ -306,37 +306,38 @@ export const editTask = async (req, res, next) => {
         }
 
         knex = await createKnexInstance(dbname);
-        let updateTaskResult;
+        const updateTaskResult = await knex('tasks').update({
+            task_name: task_name,
+            assigned_date: assignDate,
+            due_date: dueDate,
+            priority: priority,
+            description: description
+        }).where({ task_id: task_id });
 
-        if (key == "assigned_to") {
-            const existingMappings = await knex("employee_task_mapping")
-                .select("employee_id")
-                .where({ task_id: id });
+        const existingMappings = await knex("employee_task_mapping")
+            .select("employee_id")
+            .where({ task_id: task_id, status: "0" });
 
-            const existingEmployeeIds = existingMappings.map(row => row.employee_id);
+        const existingEmployeeIds = existingMappings.map(row => row.employee_id);
 
-            const employeesToInsert = value.filter(empId => !existingEmployeeIds.includes(empId));
+        const employeesToInsert = assignTo.filter(empId => !existingEmployeeIds.includes(empId));
 
-            const employeesToUpdate = existingEmployeeIds.filter(empId => !value.includes(empId));
+        const employeesToUpdate = existingEmployeeIds.filter(empId => !assignTo.includes(empId));
 
-            if (employeesToInsert.length > 0) {
-                const insertData = employeesToInsert.map(empId => ({
-                    task_id: id,
-                    employee_id: empId,
-                }));
+        if (employeesToInsert.length > 0) {
+            const insertData = employeesToInsert.map(empId => ({
+                task_id: task_id,
+                employee_id: empId,
+            }));
 
-                await knex("employee_task_mapping").insert(insertData);
-            }
+            await knex("employee_task_mapping").insert(insertData);
+        }
 
-            if (employeesToUpdate.length > 0) {
-                await knex("employee_task_mapping")
-                    .where({ task_id: id })
-                    .whereIn("employee_id", employeesToUpdate)
-                    .update({ status: "1" });
-            }
-            updateTaskResult = [];
-        } else {
-            updateTaskResult = await knex('tasks').update({ [key]: value }).where({ task_id: id });
+        if (employeesToUpdate.length > 0) {
+            await knex("employee_task_mapping")
+                .where({ task_id: task_id })
+                .whereIn("employee_id", employeesToUpdate)
+                .update({ status: "1" });
         }
 
         if (updateTaskResult) {
@@ -531,7 +532,7 @@ export const getViewTasks = async (req, res, next) => {
                 const mappedEmployeeIds = mappedData.map(data => data.employee_id);
 
                 if (mappedEmployeeIds.includes(emp_id)) {
-                    task["assignTo"] = [{"emp_id": emp_id}];
+                    task["assignTo"] = [{ "emp_id": emp_id }];
                     filteredTasks.push(task);
                 }
             }
@@ -542,14 +543,14 @@ export const getViewTasks = async (req, res, next) => {
                 const mappedData = await knex("employee_task_mapping")
                     .select("employee_id")
                     .where({ task_id: task.task_id });
-    
+
                 task["assignTo"] = await Promise.all(
                     mappedData.map(async (data) => {
                         const employee = await knex("employees")
                             .select("name")
                             .where({ employee_id: data.employee_id })
                             .first();
-    
+
                         return { emp_id: data.employee_id, emp_name: employee?.name || null };
                     })
                 );
@@ -571,7 +572,7 @@ export const getViewTasks = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service }).first();
             task["service_name"] = service?.service_name || null;
-            
+
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
 
