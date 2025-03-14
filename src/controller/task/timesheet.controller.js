@@ -76,7 +76,7 @@ export const getTimesheetLimited = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets').select('*').where('status', '0').orderBy('date', 'desc').limit(5);
+        const getTSRes = await knex('time_sheets').select('*').where('status', '0').orderBy('created_at', 'desc').limit(5);
 
         for (const task of getTSRes) {
             const employee = await knex("employees")
