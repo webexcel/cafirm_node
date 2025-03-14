@@ -135,31 +135,31 @@ export const getTasksByPriority = async (req, res, next) => {
             .orderBy('due_date', 'asc')
             .limit(5);
 
-            for (const task of getTaskRes) {
-                const mappedData = await knex("employee_task_mapping")
-                    .select("employee_id")
-                    .where({ task_id: task.task_id });
-    
-                task["assigned_to"] = await Promise.all(
-                    mappedData.map(async (data) => {
-                        const employee = await knex("employees")
-                            .select("name")
-                            .where({ employee_id: data.employee_id })
-                            .first();
-    
-                        return { emp_id: data.employee_id, emp_name: employee?.name || null };
-                    })
-                );
-    
-                const client = await knex("clients")
-                    .select("client_name")
-                    .where({ client_id: task.client_id }).first();
-                task["client_name"] = client?.client_name || null;
-                const service = await knex("services")
-                    .select("service_name")
-                    .where({ service_id: task.service }).first();
-                task["service_name"] = service?.service_name || null;
-            }
+        for (const task of getTaskRes) {
+            const mappedData = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: task.task_id });
+
+            task["assigned_to"] = await Promise.all(
+                mappedData.map(async (data) => {
+                    const employee = await knex("employees")
+                        .select("name")
+                        .where({ employee_id: data.employee_id })
+                        .first();
+
+                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                })
+            );
+
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service }).first();
+            task["service_name"] = service?.service_name || null;
+        }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
                 username: user_name,
@@ -305,8 +305,6 @@ export const editTask = async (req, res, next) => {
         let updateTaskResult;
 
         if (key == "assigned_to") {
-            //need to change
-            // updateTaskResult = await knex('tasks').update({ [key]: knex.raw('?', [JSON.stringify(value)]) }).where({ task_id: id });
             const existingMappings = await knex("employee_task_mapping")
                 .select("employee_id")
                 .where({ task_id: id });
@@ -538,10 +536,12 @@ export const getViewTasks = async (req, res, next) => {
         }
 
         for (const task of viewTaskResult) {
-            const employee = await knex("employees")
-                .select("name")
-                .where({ employee_id: task.assignTo }).first();
-            task["employee_name"] = employee?.name || null;
+            if (emp_id && emp_id != "All") {
+                const employee = await knex("employees")
+                    .select("name")
+                    .where({ employee_id: task.assignTo }).first();
+                task["employee_name"] = employee?.name || null;
+            }
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();

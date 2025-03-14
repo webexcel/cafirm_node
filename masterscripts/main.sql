@@ -101,3 +101,6 @@ DROP COLUMN service;
 
 ALTER TABLE `ca_firm`.`employees` 
 CHANGE COLUMN `password_hash` `password_hash` VARCHAR(255) NULL DEFAULT NULL ;
+
+ALTER TABLE tasks 
+DROP COLUMN assigned_to;
