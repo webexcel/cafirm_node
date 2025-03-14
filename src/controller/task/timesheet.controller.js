@@ -77,7 +77,14 @@ export const getService = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
+        let getTaskRes;
+
+        if (client_id) {
+            getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
+        } else {
+            getTaskRes = await knex('tasks').select('*').where({ 'status': '0' });
+        }
+
         const uniqueServices = [...new Set(getTaskRes.map(task => task.service))];
 
         const getTSRes = await knex('services').select('service_id', 'service_name').where({ 'status': '0' }).whereIn("service_id", uniqueServices);
@@ -129,7 +136,18 @@ export const getemployee = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id, 'service': service_id });
+        let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
+
+        if (client_id) {
+            query = query.where({ 'client_id': client_id });
+        }
+
+        if (service_id) {
+            query = query.where({ 'service': service_id });
+        }
+
+        const getTaskRes = await query;
+
         let allEmployeeIds = new Set();
         for (const task of getTaskRes) {
             const mappedEmployees = await knex("employee_task_mapping")
@@ -188,8 +206,18 @@ export const getTaskList = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTaskRes = await knex('tasks').select('task_id', 'task_name').where({ 'status': '0', 'client_id': client_id, 'service': service_id });
-        
+        let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
+
+        if (client_id) {
+            query = query.where({ 'client_id': client_id });
+        }
+
+        if (service_id) {
+            query = query.where({ 'service': service_id });
+        }
+
+        const getTaskRes = await query;
+
         let allEmployeeIds = new Set();
         let filteredTasks = [];
 
@@ -200,6 +228,8 @@ export const getTaskList = async (req, res, next) => {
 
             const employeeIds = mappedEmployees.map(emp => emp.employee_id);
             if (employeeIds.includes(emp_id)) {
+                filteredTasks.push(task);
+            } else if (!emp_id) {
                 filteredTasks.push(task);
             }
 

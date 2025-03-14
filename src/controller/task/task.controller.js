@@ -527,20 +527,37 @@ export const getViewTasks = async (req, res, next) => {
                 const mappedEmployeeIds = mappedData.map(data => data.employee_id);
 
                 if (mappedEmployeeIds.includes(emp_id)) {
-                    task["assignTo"] = emp_id;
+                    task["assignTo"] = [{"emp_id": emp_id}];
                     filteredTasks.push(task);
                 }
             }
 
             viewTaskResult = filteredTasks;
+        } else {
+            for (const task of viewTaskResult) {
+                const mappedData = await knex("employee_task_mapping")
+                    .select("employee_id")
+                    .where({ task_id: task.task_id });
+    
+                task["assignTo"] = await Promise.all(
+                    mappedData.map(async (data) => {
+                        const employee = await knex("employees")
+                            .select("name")
+                            .where({ employee_id: data.employee_id })
+                            .first();
+    
+                        return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                    })
+                );
+            }
         }
 
         for (const task of viewTaskResult) {
             if (emp_id && emp_id != "All") {
                 const employee = await knex("employees")
                     .select("name")
-                    .where({ employee_id: task.assignTo }).first();
-                task["employee_name"] = employee?.name || null;
+                    .where({ employee_id: task.assignTo[0]["emp_id"] }).first();
+                task["assignTo"][0]["emp_name"] = employee?.name || null;
             }
             const client = await knex("clients")
                 .select("client_name")
