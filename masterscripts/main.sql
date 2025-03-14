@@ -104,3 +104,12 @@ CHANGE COLUMN `password_hash` `password_hash` VARCHAR(255) NULL DEFAULT NULL ;
 
 ALTER TABLE tasks 
 DROP COLUMN assigned_to;
+
+ALTER TABLE `ca_firm`.`employees` 
+CHANGE COLUMN `password_hash` `password_hash` VARCHAR(255) NULL DEFAULT NULL ;
+
+ALTER TABLE `ca_firm`.`clients` 
+CHANGE COLUMN `pincode` `pincode` VARCHAR(20) NULL DEFAULT NULL ,
+CHANGE COLUMN `gst_number` `gst_number` VARCHAR(100) NULL DEFAULT NULL ,
+CHANGE COLUMN `pan_number` `pan_number` VARCHAR(100) NULL DEFAULT NULL ,
+CHANGE COLUMN `tan_number` `tan_number` VARCHAR(100) NULL DEFAULT NULL ;
