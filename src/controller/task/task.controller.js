@@ -135,6 +135,31 @@ export const getTasksByPriority = async (req, res, next) => {
             .orderBy('due_date', 'asc')
             .limit(5);
 
+            for (const task of getTaskRes) {
+                const mappedData = await knex("employee_task_mapping")
+                    .select("employee_id")
+                    .where({ task_id: task.task_id });
+    
+                task["assigned_to"] = await Promise.all(
+                    mappedData.map(async (data) => {
+                        const employee = await knex("employees")
+                            .select("name")
+                            .where({ employee_id: data.employee_id })
+                            .first();
+    
+                        return { emp_id: data.employee_id, emp_name: employee?.name || "Unknown" };
+                    })
+                );
+    
+                const client = await knex("clients")
+                    .select("client_name")
+                    .where({ client_id: task.client_id }).first();
+                task["client_name"] = client.client_name;
+                const service = await knex("services")
+                    .select("service_name")
+                    .where({ service_id: task.service }).first();
+                task["service_name"] = service.service_name;
+            }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
                 username: user_name,
