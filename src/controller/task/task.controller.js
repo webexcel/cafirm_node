@@ -172,7 +172,7 @@ export const getTasksByPriority = async (req, res, next) => {
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { client, name, service, assignTo, assignDate, dueDate, priority } = req.body;
+        const { client, name, service, assignTo, assignDate, dueDate, priority, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Task Request Received", {
@@ -199,7 +199,8 @@ export const addTask = async (req, res, next) => {
             service: service,
             assigned_date: assignDate,
             due_date: dueDate,
-            priority: priority
+            priority: priority,
+            description: description
         });
 
         if (insertTaskResult) {
