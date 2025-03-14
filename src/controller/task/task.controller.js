@@ -135,6 +135,31 @@ export const getTasksByPriority = async (req, res, next) => {
             .orderBy('due_date', 'asc')
             .limit(5);
 
+            for (const task of getTaskRes) {
+                const mappedData = await knex("employee_task_mapping")
+                    .select("employee_id")
+                    .where({ task_id: task.task_id });
+    
+                task["assigned_to"] = await Promise.all(
+                    mappedData.map(async (data) => {
+                        const employee = await knex("employees")
+                            .select("name")
+                            .where({ employee_id: data.employee_id })
+                            .first();
+    
+                        return { emp_id: data.employee_id, emp_name: employee?.name || "Unknown" };
+                    })
+                );
+    
+                const client = await knex("clients")
+                    .select("client_name")
+                    .where({ client_id: task.client_id }).first();
+                task["client_name"] = client.client_name;
+                const service = await knex("services")
+                    .select("service_name")
+                    .where({ service_id: task.service }).first();
+                task["service_name"] = service.service_name;
+            }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
                 username: user_name,
@@ -172,7 +197,7 @@ export const getTasksByPriority = async (req, res, next) => {
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { client, name, service, assignTo, assignDate, dueDate, priority } = req.body;
+        const { client, name, service, assignTo, assignDate, dueDate, priority, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Task Request Received", {
@@ -199,7 +224,8 @@ export const addTask = async (req, res, next) => {
             service: service,
             assigned_date: assignDate,
             due_date: dueDate,
-            priority: priority
+            priority: priority,
+            description: description
         });
 
         if (insertTaskResult) {
