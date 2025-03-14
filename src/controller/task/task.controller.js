@@ -80,6 +80,8 @@ export const getTasksByType = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service }).first();
             task["service_name"] = service?.service_name || null;
+
+            task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
 
         if (getTaskRes) {
@@ -159,6 +161,8 @@ export const getTasksByPriority = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service }).first();
             task["service_name"] = service?.service_name || null;
+
+            task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
@@ -567,6 +571,8 @@ export const getViewTasks = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service }).first();
             task["service_name"] = service?.service_name || null;
+            
+            task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
 
         if (viewTaskResult) {
