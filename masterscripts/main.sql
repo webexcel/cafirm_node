@@ -98,3 +98,6 @@ ALTER TABLE time_sheets
 DROP COLUMN employee,
 DROP COLUMN client,
 DROP COLUMN service;
+
+ALTER TABLE `ca_firm`.`employees` 
+CHANGE COLUMN `password_hash` `password_hash` VARCHAR(255) NULL DEFAULT NULL ;

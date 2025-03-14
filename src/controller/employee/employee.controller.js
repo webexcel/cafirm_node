@@ -1,5 +1,6 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import bcrypt from 'bcrypt';
 
 export const getEmployees = async (req, res, next) => {
   let knex = null;
@@ -52,7 +53,7 @@ export const getEmployees = async (req, res, next) => {
 export const addEmployee = async (req, res, next) => {
   let knex = null;
   try {
-    const { name, email, password, phone, role } = req.body;
+    const { name, email, phone, role } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Employee Request Received", {
@@ -60,7 +61,7 @@ export const addEmployee = async (req, res, next) => {
       reqdetails: "employee-addEmployee",
     });
 
-    if (!name || !email || !password || !phone || !role) {
+    if (!name || !email || !phone || !role) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "employee-addEmployee",
@@ -97,7 +98,6 @@ export const addEmployee = async (req, res, next) => {
       .insert({
         name: name,
         email: email,
-        password_hash: password,
         phone: phone,
         role: role
       });
@@ -294,6 +294,147 @@ export const getEmployeeDetails = async (req, res, next) => {
       reqdetails: "employee-getEmployeeDetails",
     });
     next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
+export const updatePassword = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { id, password } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Update Employee Password Request Received", {
+      username: user_name,
+      reqdetails: "employee-updatePassword",
+    });
+
+    if (!id || !password) {
+      logger.error("Mandatory fields are missing for Update Employee Password", {
+        username: user_name,
+        reqdetails: "employee-updatePassword",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    knex = await createKnexInstance(dbname);
+    
+    const updateResult = await knex("employees").update({ "password_hash": hashedPassword }).where({ employee_id: id });
+
+    if (updateResult) {
+      logger.info("Employee Password updated successfully", {
+        username: user_name,
+        reqdetails: "employee-updatePassword",
+      });
+      return res.status(200).json({
+        message: "Employee Password updated successfully",
+        status: true,
+      });
+    } else {
+      logger.error("Employee Password update failed", {
+        username: user_name,
+        reqdetails: "employee-updatePassword",
+      });
+      return res.status(404).json({
+        message: "Employee Password update failed",
+        status: false,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating Employee Password:", error);
+    next(error);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { id, oldPass, newPass } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Re-set Employee Password Request Received", {
+      username: user_name,
+      reqdetails: "employee-resetPassword",
+    });
+
+    if (!id || !oldPass || !newPass) {
+      logger.error("Mandatory fields are missing for Re-set Employee Password", {
+        username: user_name,
+        reqdetails: "employee-resetPassword",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+
+    knex = await createKnexInstance(dbname);
+
+    const empRes = await knex("employees").select().where({ employee_id: id }).first();
+
+    if (empRes) {
+      const isMatch = await bcrypt.compare(oldPass, empRes.password_hash);
+      if (isMatch) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPass, saltRounds);
+
+        const updateResult = await knex("employees").update({ "password_hash": hashedPassword }).where({ employee_id: id });
+        
+        if (updateResult) {
+          logger.info("Employee Re-seted successfully", {
+            username: user_name,
+            reqdetails: "employee-resetPassword",
+          });
+          return res.status(200).json({
+            message: "Employee Re-seted successfully",
+            status: true,
+          });
+        } else {
+          logger.error("Employee Re-set failed", {
+            username: user_name,
+            reqdetails: "employee-resetPassword",
+          });
+          return res.status(404).json({
+            message: "Employee Re-set failed",
+            status: false,
+          });
+        }
+      } else {
+        logger.error("Employee Password Not Matched", {
+          username: user_name,
+          reqdetails: "employee-resetPassword",
+        });
+        return res.status(404).json({
+          message: "Employee Password Not Matched",
+          status: false,
+        });
+      }
+    } else {
+      logger.error("Employee Not Found", {
+        username: user_name,
+        reqdetails: "employee-resetPassword",
+      });
+      return res.status(404).json({
+        message: "Employee Not Found",
+        status: false,
+      });
+    }  
+  } catch (error) {
+    console.error("Error Re-set Employee:", error);
+    next(error);
   } finally {
     if (knex) {
       knex.destroy();
