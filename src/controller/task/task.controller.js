@@ -68,18 +68,18 @@ export const getTasksByType = async (req, res, next) => {
                         .where({ employee_id: data.employee_id })
                         .first();
 
-                    return { emp_id: data.employee_id, emp_name: employee?.name || "Unknown" };
+                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
                 })
             );
 
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();
-            task["client_name"] = client.client_name;
+            task["client_name"] = client?.client_name || null;
             const service = await knex("services")
                 .select("service_name")
                 .where({ service_id: task.service }).first();
-            task["service_name"] = service.service_name;
+            task["service_name"] = service?.service_name || null;
         }
 
         if (getTaskRes) {
@@ -147,18 +147,18 @@ export const getTasksByPriority = async (req, res, next) => {
                             .where({ employee_id: data.employee_id })
                             .first();
     
-                        return { emp_id: data.employee_id, emp_name: employee?.name || "Unknown" };
+                        return { emp_id: data.employee_id, emp_name: employee?.name || null };
                     })
                 );
     
                 const client = await knex("clients")
                     .select("client_name")
                     .where({ client_id: task.client_id }).first();
-                task["client_name"] = client.client_name;
+                task["client_name"] = client?.client_name || null;
                 const service = await knex("services")
                     .select("service_name")
                     .where({ service_id: task.service }).first();
-                task["service_name"] = service.service_name;
+                task["service_name"] = service?.service_name || null;
             }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
