@@ -243,7 +243,7 @@ export const getTaskList = async (req, res, next) => {
 export const addTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, clientId, serviceId, task_id, date, totalMinutes, description } = req.body;
+        const { emp_id, clientId, serviceId, task_id, date, totalMinutes } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Time-Sheet Request Received", {
@@ -291,8 +291,7 @@ export const addTimesheet = async (req, res, next) => {
             service_id: serviceId,
             task_id: task_id,
             date: date,
-            total_minutes: totalMinutes,
-            description: description
+            total_minutes: totalMinutes
         });
 
         if (insertTSResult) {
