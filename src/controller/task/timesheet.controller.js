@@ -64,6 +64,69 @@ export const getTimesheet = async (req, res, next) => {
     }
 };
 
+export const getTimesheetLimited = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Time-Sheet List Request Received", {
+            username: user_name,
+            reqdetails: "task-getTimesheetLimited",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getTSRes = await knex('time_sheets').select('*').where('status', '0').orderBy('date', 'desc').limit(5);
+
+        for (const task of getTSRes) {
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.employee_id }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service_id }).first();
+            task["service_name"] = service?.service_name || null;
+        }
+
+        if (getTSRes) {
+            logger.info("Time-Sheet List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getTimesheetLimited",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet List retrieved successfully",
+                data: getTSRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Details found", {
+                username: user_name,
+                reqdetails: "task-getTimesheetLimited",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getTimesheetLimited",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const getService = async (req, res, next) => {
     let knex = null;
     try {
@@ -346,6 +409,65 @@ export const addTimesheet = async (req, res, next) => {
         }
     } catch (error) {
         console.error("Error inserting Time-Sheet:", error);
+        next(error);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const editTimesheet = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { ts_id, date, totalMinutes, description } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Update Time-Sheet Request Received", {
+            username: user_name,
+            reqdetails: "task-editTimesheet",
+        });
+
+        if (!ts_id || !date || !totalMinutes) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "task-editTimesheet",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const updateTSResult = await knex('time_sheets').update({
+            date: date,
+            total_minutes: totalMinutes,
+            description: description
+        }).where({ time_sheet_id: ts_id });
+
+        if (updateTSResult) {
+            logger.info("Time-Sheet updated successfully", {
+                username: user_name,
+                reqdetails: "task-editTimesheet",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet updated successfully",
+                status: true,
+            });
+        } else {
+            logger.error("Failed to update Time-Sheet", {
+                username: user_name,
+                reqdetails: "task-editTimesheet",
+            });
+            return res.status(500).json({
+                message: "Failed to update Time-Sheet",
+                status: false,
+            });
+        }
+    } catch (error) {
+        console.error("Error updating Time-Sheet:", error);
         next(error);
     } finally {
         if (knex) {
