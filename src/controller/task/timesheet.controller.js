@@ -573,6 +573,10 @@ export const viewTimesheet = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service_id }).first();
             task["service_name"] = service?.service_name || null;
+            const taskName = await knex("tasks")
+                .select("task_name")
+                .where({ task_id: task.task_id }).first();
+            task["task_name"] = taskName?.task_name || null;
         }
 
         if (getTSRes) {
