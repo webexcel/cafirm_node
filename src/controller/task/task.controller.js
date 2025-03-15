@@ -163,6 +163,13 @@ export const getTasksByPriority = async (req, res, next) => {
             task["service_name"] = service?.service_name || null;
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
+
+            const tsData = await knex("time_sheets").select("*").where({"task_id": task.task_id});
+            let totalMinutes = 0;
+            tsData.map(data => {
+                totalMinutes += data.total_minutes;
+            });
+            task["total_minutes"] = totalMinutes;
         }
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
@@ -575,6 +582,13 @@ export const getViewTasks = async (req, res, next) => {
             task["service_name"] = service?.service_name || null;
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
+
+            const tsData = await knex("time_sheets").select("*").where({"task_id": task.task_id});
+            let totalMinutes = 0;
+            tsData.map(data => {
+                totalMinutes += data.total_minutes;
+            });
+            task["total_minutes"] = totalMinutes;
         }
 
         if (viewTaskResult) {
