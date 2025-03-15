@@ -128,3 +128,5 @@ ADD CONSTRAINT `time_sheets_ibfk_2`
 
 ALTER TABLE ca_firm.clients 
 ADD COLUMN display_name VARCHAR(100) AFTER client_name;
+
+ALTER TABLE ca_firm.clients ADD COLUMN photo LONGTEXT AFTER status;
