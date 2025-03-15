@@ -113,3 +113,18 @@ CHANGE COLUMN `pincode` `pincode` VARCHAR(20) NULL DEFAULT NULL ,
 CHANGE COLUMN `gst_number` `gst_number` VARCHAR(100) NULL DEFAULT NULL ,
 CHANGE COLUMN `pan_number` `pan_number` VARCHAR(100) NULL DEFAULT NULL ,
 CHANGE COLUMN `tan_number` `tan_number` VARCHAR(100) NULL DEFAULT NULL ;
+
+ALTER TABLE ca_firm.employees ADD COLUMN photo LONGTEXT AFTER status;
+
+ALTER TABLE `ca_firm`.`time_sheets` 
+DROP FOREIGN KEY `time_sheets_ibfk_2`;
+ALTER TABLE `ca_firm`.`time_sheets` 
+CHANGE COLUMN `client_id` `client_id` INT NULL DEFAULT NULL ;
+ALTER TABLE `ca_firm`.`time_sheets` 
+ADD CONSTRAINT `time_sheets_ibfk_2`
+  FOREIGN KEY (`client_id`)
+  REFERENCES `ca_firm`.`clients` (`client_id`)
+  ON DELETE CASCADE;
+
+ALTER TABLE ca_firm.clients 
+ADD COLUMN display_name VARCHAR(100) AFTER client_name;

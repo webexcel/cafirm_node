@@ -52,7 +52,7 @@ export const getClients = async (req, res, next) => {
 export const addClient = async (req, res, next) => {
   let knex = null;
   try {
-    const { name, type, cont_person, mail, phone, address, city, state, country, pin, gst_num, pan_num, tan_num, incop_date, fin_start, fin_end } = req.body;
+    const { name, dis_name, type, cont_person, mail, phone, address, city, state, country, pin, gst_num, pan_num, tan_num, incop_date, fin_start, fin_end } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Client Request Received", {
@@ -60,7 +60,7 @@ export const addClient = async (req, res, next) => {
       reqdetails: "client-addClient",
     });
 
-    if (!name || !type || !cont_person || !mail || !phone) {
+    if (!name || !dis_name || !type || !cont_person || !mail || !phone) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "client-addClient",
@@ -97,6 +97,7 @@ export const addClient = async (req, res, next) => {
 
     const insertEmpResult = await knex('clients').insert({
       client_name: name,
+      display_name: dis_name,
       client_type: type,
       contact_person: cont_person,
       email: mail,

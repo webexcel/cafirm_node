@@ -14,7 +14,7 @@ export const getEmployees = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role').where("status", "0");
+    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {

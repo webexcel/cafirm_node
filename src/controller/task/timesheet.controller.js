@@ -336,7 +336,7 @@ export const getTaskList = async (req, res, next) => {
 export const addTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, clientId, serviceId, task_id, date, totalMinutes, description } = req.body;
+        const { emp_id, task_id, date, totalMinutes, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Time-Sheet Request Received", {
@@ -344,7 +344,7 @@ export const addTimesheet = async (req, res, next) => {
             reqdetails: "task-addTimesheet",
         });
 
-        if (!emp_id || !clientId || !serviceId || !totalMinutes) {
+        if (!emp_id || !totalMinutes) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addTimesheet",
@@ -360,8 +360,8 @@ export const addTimesheet = async (req, res, next) => {
         const existingTS = await knex('time_sheets')
             .where(function () {
                 this.where('employee_id', emp_id)
-                    .andWhere('client_id', clientId)
-                    .andWhere('service_id', serviceId)
+                    // .andWhere('client_id', clientId)
+                    // .andWhere('service_id', serviceId)
                     .andWhere('date', date);
             })
             .where('status', '0')
@@ -380,8 +380,8 @@ export const addTimesheet = async (req, res, next) => {
 
         const insertTSResult = await knex('time_sheets').insert({
             employee_id: emp_id,
-            client_id: clientId,
-            service_id: serviceId,
+            // client_id: clientId,
+            // service_id: serviceId,
             task_id: task_id,
             date: date,
             total_minutes: totalMinutes,
