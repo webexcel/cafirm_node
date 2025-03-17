@@ -1,34 +1,34 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 
-export const getCalenderDetails = async (req, res, next) => {
+export const getCalendarDetails = async (req, res, next) => {
   let knex = null;
   try {
     const { dbname, user_name } = req.user;
 
     logger.info("Get Events List Request Received", {
       username: user_name,
-      reqdetails: "calender-getCalenderDetails",
+      reqdetails: "calendar-getCalendarDetails",
     });
 
     knex = await createKnexInstance(dbname);
 
-    const getCalenderResult = await knex('calendar').select('*').where("status", "0");
+    const getCalendarResult = await knex('calendar').select('*').where("status", "0");
 
-    if (getCalenderResult) {
+    if (getCalendarResult) {
       logger.info("Events List retrieved successfully", {
         username: user_name,
-        reqdetails: "calender-getCalenderDetails",
+        reqdetails: "calendar-getCalendarDetails",
       });
       return res.status(200).json({
         message: "Events List retrieved successfully",
-        data: getCalenderResult,
+        data: getCalendarResult,
         status: true,
       });
     } else {
       logger.warn("No Events Details found", {
         username: user_name,
-        reqdetails: "calender-getCalenderDetails",
+        reqdetails: "calendar-getCalendarDetails",
       });
       return res.status(404).json({
         message: "No Events Details found",
@@ -39,7 +39,7 @@ export const getCalenderDetails = async (req, res, next) => {
     logger.error("Error fetching Events List", {
       error: err.message,
       username: req.user?.user_name,
-      reqdetails: "calender-getCalenderDetails",
+      reqdetails: "calendar-getCalendarDetails",
     });
     next(err);
   } finally {
@@ -57,13 +57,13 @@ export const addEvent = async (req, res, next) => {
 
     logger.info("Add Event Request Received", {
       username: user_name,
-      reqdetails: "calender-addEvent",
+      reqdetails: "calendar-addEvent",
     });
 
     if (!title || title.trim() === "" || !start_date || !end_date) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
-        reqdetails: "calender-addEvent",
+        reqdetails: "calendar-addEvent",
       });
       return res.status(400).json({
         message: "Mandatory fields are missing",
@@ -85,7 +85,7 @@ export const addEvent = async (req, res, next) => {
     if (existingEvent) {
       logger.error("Duplicates in Event Entry", {
         username: user_name,
-        reqdetails: "calender-addEvent",
+        reqdetails: "calendar-addEvent",
       });
       return res.status(500).json({
         message: "Duplicates in Event Entry for Title",
@@ -104,7 +104,7 @@ export const addEvent = async (req, res, next) => {
     if (insertEventRes) {
       logger.info("Event inserted successfully", {
         username: user_name,
-        reqdetails: "calender-addEvent",
+        reqdetails: "calendar-addEvent",
       });
       return res.status(200).json({
         message: "Event inserted successfully",
@@ -113,7 +113,7 @@ export const addEvent = async (req, res, next) => {
     } else {
       logger.error("Failed to insert Event", {
         username: user_name,
-        reqdetails: "calender-addEvent",
+        reqdetails: "calendar-addEvent",
       });
       return res.status(500).json({
         message: "Failed to insert Event",
@@ -138,13 +138,13 @@ export const editEvent = async (req, res, next) => {
 
     logger.info("Edit Event Request Received", {
       username: user_name,
-      reqdetails: "calender-editEvent",
+      reqdetails: "calendar-editEvent",
     });
 
     if (!evt_id || !title || !start_date || !end_date) {
       logger.error("Mandatory fields are missing for Edit Event", {
         username: user_name,
-        reqdetails: "calender-editEvent",
+        reqdetails: "calendar-editEvent",
       });
       return res.status(400).json({
         message: "Mandatory fields are missing",
@@ -159,7 +159,7 @@ export const editEvent = async (req, res, next) => {
     if (updateResult) {
       logger.info("Event updated successfully", {
         username: user_name,
-        reqdetails: "calender-editEvent",
+        reqdetails: "calendar-editEvent",
       });
       return res.status(200).json({
         message: "Event updated successfully",
@@ -168,7 +168,7 @@ export const editEvent = async (req, res, next) => {
     } else {
       logger.error("Event update failed", {
         username: user_name,
-        reqdetails: "calender-editEvent",
+        reqdetails: "calendar-editEvent",
       });
       return res.status(404).json({
         message: "Event update failed",
@@ -193,13 +193,13 @@ export const deleteEvent = async (req, res, next) => {
 
     logger.info("Delete Event Request Received", {
       username: user_name,
-      reqdetails: "calender-deleteEvent",
+      reqdetails: "calendar-deleteEvent",
     });
 
     if (!evt_id) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
-        reqdetails: "calender-deleteEvent",
+        reqdetails: "calendar-deleteEvent",
       });
       return res.status(400).json({
         message: "Mandatory fields are missing",
@@ -214,7 +214,7 @@ export const deleteEvent = async (req, res, next) => {
     if (deleteEventRes) {
       logger.info("Event deleted successfully", {
         username: user_name,
-        reqdetails: "calender-deleteEvent",
+        reqdetails: "calendar-deleteEvent",
       });
       return res.status(200).json({
         message: "Event deleted successfully",
@@ -223,7 +223,7 @@ export const deleteEvent = async (req, res, next) => {
     } else {
       logger.error("Event delete failed", {
         username: user_name,
-        reqdetails: "calender-deleteEvent",
+        reqdetails: "calendar-deleteEvent",
       });
       return res.status(404).json({
         message: "Event delete failed",
