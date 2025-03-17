@@ -97,7 +97,7 @@ export const addClient = async (req, res, next) => {
       });
     }
 
-    const insertEmpResult = await knex('clients').insert({
+    const insertClientResult = await knex('clients').insert({
       client_name: name,
       display_name: dis_name,
       client_type: type,
@@ -117,7 +117,7 @@ export const addClient = async (req, res, next) => {
       financial_year_end: fin_end
     });
 
-    if (insertEmpResult) {
+    if (insertClientResult) {
       logger.info("Client inserted successfully", {
         username: user_name,
         reqdetails: "client-addClient",
@@ -246,9 +246,9 @@ export const deleteClient = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const deleteEmpRes = await knex('clients').update({ status: "1" }).where({ client_id: id });
+    const deleteClientRes = await knex('clients').update({ status: "1" }).where({ client_id: id });
 
-    if (deleteEmpRes) {
+    if (deleteClientRes) {
       logger.info("Client deleted successfully", {
         username: user_name,
         reqdetails: "client-deleteClient",
