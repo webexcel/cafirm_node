@@ -130,3 +130,16 @@ ALTER TABLE ca_firm.clients
 ADD COLUMN display_name VARCHAR(100) AFTER client_name;
 
 ALTER TABLE ca_firm.clients ADD COLUMN photo LONGTEXT AFTER status;
+
+ALTER TABLE `ca_firm`.`attendance` 
+CHANGE COLUMN `status` `status` ENUM('0', '1') NULL DEFAULT '0' ;
+
+ALTER TABLE attendance 
+CHANGE COLUMN date login_date DATE NOT NULL,
+ADD COLUMN logout_date DATE DEFAULT NULL AFTER login_time,
+CHANGE COLUMN total_hours total_minutes INT DEFAULT NULL,
+CHANGE COLUMN status status ENUM('0','1') NOT NULL DEFAULT '0',
+MODIFY COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE ca_firm.services 
+ADD COLUMN service_short_name VARCHAR(20) NULL AFTER service_name;

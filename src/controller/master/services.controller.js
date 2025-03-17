@@ -13,7 +13,7 @@ export const getServices = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getServiceResult = await knex('services').select('service_id', 'service_name').where("status", "0");
+    const getServiceResult = await knex('services').select('service_id', 'service_name', 'service_short_name').where("status", "0");
 
     if (getServiceResult) {
       logger.info("Services List retrieved successfully", {
@@ -52,7 +52,7 @@ export const getServices = async (req, res, next) => {
 export const addService = async (req, res, next) => {
   let knex = null;
   try {
-    const { service_name } = req.body;
+    const { service_name, short_name } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Service Request Received", {
@@ -60,7 +60,7 @@ export const addService = async (req, res, next) => {
       reqdetails: "master-addService",
     });
 
-    if (!service_name || service_name.trim() === "") {
+    if (!service_name || service_name.trim() === "" || !short_name || short_name.trim() === "") {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "master-addService",
@@ -94,6 +94,7 @@ export const addService = async (req, res, next) => {
     const insertServiceRes = await knex('services')
       .insert({
         service_name: service_name,
+        service_short_name: short_name
       });
 
     if (insertServiceRes) {
@@ -128,7 +129,7 @@ export const addService = async (req, res, next) => {
 export const editService = async (req, res, next) => {
   let knex = null;
   try {
-    const { id, service_name } = req.body;
+    const { id, service_name, short_name } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Edit Service Request Received", {
@@ -136,7 +137,7 @@ export const editService = async (req, res, next) => {
       reqdetails: "master-editService",
     });
 
-    if (!id || !service_name) {
+    if (!id || !service_name || !short_name) {
       logger.error("Mandatory fields are missing for Edit Employee", {
         username: user_name,
         reqdetails: "master-editService",
@@ -149,7 +150,7 @@ export const editService = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const updateResult = await knex("services").update({ service_name: service_name }).where({ service_id: id });
+    const updateResult = await knex("services").update({ service_name: service_name, service_short_name: short_name }).where({ service_id: id });
 
     if (updateResult) {
       logger.info("Service updated successfully", {

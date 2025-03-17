@@ -154,7 +154,7 @@ export const getService = async (req, res, next) => {
 
         const uniqueServices = [...new Set(getTaskRes.map(task => task.service))];
 
-        const getTSRes = await knex('services').select('service_id', 'service_name').where({ 'status': '0' }).whereIn("service_id", uniqueServices);
+        const getTSRes = await knex('services').select('service_id', 'service_name', 'service_short_name').where({ 'status': '0' }).whereIn("service_id", uniqueServices);
 
         if (getTSRes) {
             logger.info("Time-Sheet Service List retrieved successfully", {
