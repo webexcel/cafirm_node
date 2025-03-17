@@ -149,3 +149,13 @@ DROP FOREIGN KEY `attendance_ibfk_1`;
 
 ALTER TABLE `ca_firm`.`attendance` 
 DROP INDEX `employee_id` ;
+
+CREATE TABLE calendar (
+    cal_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status ENUM('0', '1') NOT NULL DEFAULT '0',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
