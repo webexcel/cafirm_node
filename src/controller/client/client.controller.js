@@ -1,5 +1,7 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import fs from 'fs';
+import path from 'path';
 
 export const getClients = async (req, res, next) => {
   let knex = null;
@@ -167,8 +169,29 @@ export const editClient = async (req, res, next) => {
     }
 
     knex = await createKnexInstance(dbname);
-    
-    const updateResult = await knex('clients').update({ [key]: value }).where({ client_id: id });
+
+    let updateResult;
+
+    if (key == "photo") {
+      const uploadDir = "C:\\raja\\profiles";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const fileName = `client_${id}_${Date.now()}.png`;
+      const filePath = path.join(uploadDir, fileName);
+
+      const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
+
+      const buffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `http://localhost:3006/profiles/${fileName}`;
+
+      updateResult = await knex("clients").update({ [key]: fileUrl }).where({ client_id: id });
+    } else {
+      updateResult = await knex("clients").update({ [key]: value }).where({ client_id: id });
+    }
 
     if (updateResult) {
       logger.info("Client updated successfully", {

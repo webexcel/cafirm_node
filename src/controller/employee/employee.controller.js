@@ -1,6 +1,8 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
 
 export const getEmployees = async (req, res, next) => {
   let knex = null;
@@ -154,8 +156,29 @@ export const editEmployee = async (req, res, next) => {
     }
 
     knex = await createKnexInstance(dbname);
-    
-    const updateResult = await knex("employees").update({ [key]: value }).where({ employee_id: id });
+
+    let updateResult;
+
+    if (key == "photo") {
+      const uploadDir = "C:\\raja\\profiles";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const fileName = `employee_${id}_${Date.now()}.png`;
+      const filePath = path.join(uploadDir, fileName);
+
+      const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
+
+      const buffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `http://localhost:3006/profiles/${fileName}`;
+
+      updateResult = await knex("employees").update({ [key]: fileUrl }).where({ employee_id: id });
+    } else {
+      updateResult = await knex("employees").update({ [key]: value }).where({ employee_id: id });
+    }
 
     if (updateResult) {
       logger.info("Employee updated successfully", {
@@ -327,7 +350,7 @@ export const updatePassword = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     knex = await createKnexInstance(dbname);
-    
+
     const updateResult = await knex("employees").update({ "password_hash": hashedPassword }).where({ employee_id: id });
 
     if (updateResult) {
@@ -392,7 +415,7 @@ export const resetPassword = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(newPass, saltRounds);
 
         const updateResult = await knex("employees").update({ "password_hash": hashedPassword }).where({ employee_id: id });
-        
+
         if (updateResult) {
           logger.info("Employee Re-seted successfully", {
             username: user_name,
@@ -431,7 +454,7 @@ export const resetPassword = async (req, res, next) => {
         message: "Employee Not Found",
         status: false,
       });
-    }  
+    }
   } catch (error) {
     console.error("Error Re-set Employee:", error);
     next(error);
