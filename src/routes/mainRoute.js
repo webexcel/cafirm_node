@@ -10,6 +10,7 @@ import clientTSRoutes from "./timesheet/client.route.js";
 import servicesRoutes from "./master/services.route.js";
 import PermissionRoutes from "./permission/permission.routes.js";
 import attendanceRoutes from "./attendance/attendance.route.js";
+import dashboardRoutes from "./dashboard/dashboard.route.js";
 
 const mainRoutes = express.Router();
 
@@ -35,5 +36,6 @@ mainRoutes.use("/permissions", PermissionRoutes);
 
 mainRoutes.use("/attendance", attendanceRoutes);
 
+mainRoutes.use("/dashboard", dashboardRoutes);
 
 export default mainRoutes;

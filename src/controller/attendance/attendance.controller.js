@@ -1,5 +1,6 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import moment from 'moment';
 
 export const getAttendance = async (req, res, next) => {
   let knex = null;
@@ -15,7 +16,7 @@ export const getAttendance = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const getEmpResult = await knex('attendance')
-      .select('employee_id', 'login_date', 'login_time', 'logout_date', 'logout_time', 'total_minutes')
+      .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes')
       .whereRaw("DATE(created_at) = ?", [date]);
 
     if (getEmpResult) {
@@ -116,7 +117,7 @@ export const loginAttendance = async (req, res, next) => {
 export const logoutAttendance = async (req, res, next) => {
   let knex = null;
   try {
-    const { att_id, logout_date, logout_time, total_mins } = req.body;
+    const { att_id, logout_date, logout_time } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Attendance Request Received", {
@@ -124,7 +125,7 @@ export const logoutAttendance = async (req, res, next) => {
       reqdetails: "attendance-logoutAttendance",
     });
 
-    if (!att_id || !logout_date || !logout_time || !total_mins) {
+    if (!att_id || !logout_date || !logout_time) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "attendance-logoutAttendance",
@@ -137,11 +138,30 @@ export const logoutAttendance = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
+    const data = await knex('attendance').select(knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time').where("attendance_id", att_id);
+
+    let totalMinutes = 0;
+
+    if (data.length > 0) {
+      const loginDateTime = moment(`${data[0].login_date} ${data[0].login_time}`, "YYYY-MM-DD HH:mm:ss");
+      const logoutDateTime = moment(`${logout_date} ${logout_time}`, "YYYY-MM-DD HH:mm:ss");
+      totalMinutes = logoutDateTime.diff(loginDateTime, 'minutes');
+    } else {
+      logger.error("No Attendance Record Found.", {
+        username: user_name,
+        reqdetails: "attendance-logoutAttendance",
+      });
+      return res.status(500).json({
+        message: "No Attendance Record Found.",
+        status: false,
+      });
+    }
+
     const updateAttResult = await knex('attendance')
       .update({
         logout_date: logout_date,
         logout_time: logout_time,
-        total_minutes: total_mins
+        total_minutes: totalMinutes
       }).where("attendance_id", att_id);
 
     if (updateAttResult) {
@@ -166,6 +186,68 @@ export const logoutAttendance = async (req, res, next) => {
   } catch (error) {
     console.error("Error updating Attendance:", error);
     next(error);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
+export const getAttendanceByDate = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { emp_id, start_date, end_date } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Attendance List Request Received", {
+      username: user_name,
+      reqdetails: "attendance-getAttendanceByDate",
+    });
+
+    if (!emp_id || !start_date || !end_date) {
+      logger.error("Mandatory fields are missing", {
+        username: user_name,
+        reqdetails: "attendance-getAttendanceByDate",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+
+    knex = await createKnexInstance(dbname);
+
+    const getEmpResult = await knex('attendance')
+      .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes')
+      .whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]).where("employee_id", emp_id);
+
+    if (getEmpResult) {
+      logger.info("Attendance List retrieved successfully", {
+        username: user_name,
+        reqdetails: "attendance-getAttendanceByDate",
+      });
+      return res.status(200).json({
+        message: "Attendance List retrieved successfully",
+        data: getEmpResult,
+        status: true,
+      });
+    } else {
+      logger.warn("No Attendance Details found", {
+        username: user_name,
+        reqdetails: "attendance-getAttendanceByDate",
+      });
+      return res.status(404).json({
+        message: "No Attendance Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Attendance List", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "attendance-getAttendanceByDate",
+    });
+    next(err);
   } finally {
     if (knex) {
       knex.destroy();

@@ -143,3 +143,9 @@ MODIFY COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE ca_firm.services 
 ADD COLUMN service_short_name VARCHAR(20) NULL AFTER service_name;
+
+ALTER TABLE `ca_firm`.`attendance` 
+DROP FOREIGN KEY `attendance_ibfk_1`;
+
+ALTER TABLE `ca_firm`.`attendance` 
+DROP INDEX `employee_id` ;
