@@ -204,22 +204,34 @@ export const getAttendanceByDate = async (req, res, next) => {
       reqdetails: "attendance-getAttendanceByDate",
     });
 
-    if (!emp_id || !start_date || !end_date) {
-      logger.error("Mandatory fields are missing", {
-        username: user_name,
-        reqdetails: "attendance-getAttendanceByDate",
-      });
-      return res.status(400).json({
-        message: "Mandatory fields are missing",
-        status: false,
-      });
-    }
-
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('attendance')
-      .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes')
-      .whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]).where("employee_id", emp_id);
+    const query = knex('attendance')
+      .select(
+        'employee_id',
+        knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"),
+        'login_time',
+        knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"),
+        'logout_time',
+        'total_minutes'
+      )
+      .orderBy("created_at", "desc");
+
+    if (emp_id) {
+      query.where("employee_id", emp_id)
+        .whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]);
+    } else {
+      query.whereRaw("DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+    }
+
+    const getEmpResult = await query;
+
+    for (const data of getEmpResult) {
+      const employee = await knex("employees")
+          .select("name")
+          .where({ employee_id: data.employee_id }).first();
+          data["employee_name"] = employee?.name || null;
+  }
 
     if (getEmpResult) {
       logger.info("Attendance List retrieved successfully", {
