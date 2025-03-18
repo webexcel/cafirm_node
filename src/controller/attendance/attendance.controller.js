@@ -16,7 +16,7 @@ export const getAttendance = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const getAttendanceRes = await knex('attendance')
-      .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes')
+      .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes', 'total_time')
       .whereRaw("DATE(created_at) = ?", [date]);
 
     if (getAttendanceRes) {
@@ -141,11 +141,14 @@ export const logoutAttendance = async (req, res, next) => {
     const data = await knex('attendance').select(knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time').where("attendance_id", att_id);
 
     let totalMinutes = 0;
-
+    let formattedTime = "00:00:00";
     if (data.length > 0) {
       const loginDateTime = moment(`${data[0].login_date} ${data[0].login_time}`, "YYYY-MM-DD HH:mm:ss");
       const logoutDateTime = moment(`${logout_date} ${logout_time}`, "YYYY-MM-DD HH:mm:ss");
-      totalMinutes = logoutDateTime.diff(loginDateTime, 'minutes');
+      const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds'); 
+      totalMinutes = Math.ceil(totalSeconds / 60);
+
+      formattedTime = moment.utc(totalSeconds * 1000).format("HH:mm:ss");
     } else {
       logger.error("No Attendance Record Found.", {
         username: user_name,
@@ -161,7 +164,8 @@ export const logoutAttendance = async (req, res, next) => {
       .update({
         logout_date: logout_date,
         logout_time: logout_time,
-        total_minutes: totalMinutes
+        total_minutes: totalMinutes,
+        total_time: formattedTime
       }).where("attendance_id", att_id);
 
     if (updateAttResult) {
@@ -213,7 +217,8 @@ export const getAttendanceByDate = async (req, res, next) => {
         'login_time',
         knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"),
         'logout_time',
-        'total_minutes'
+        'total_minutes',
+        'total_time'
       )
       .orderBy("created_at", "desc");
 
@@ -310,14 +315,18 @@ export const checkTodayAttendance = async (req, res, next) => {
         const loginDateTime = moment(`${data.login_date} ${data.login_time}`, "YYYY-MM-DD HH:mm:ss");
         const logoutDateTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
 
-        const totalMinutes = logoutDateTime.diff(loginDateTime, 'minutes');
+        const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds'); 
+        const totalMinutes = Math.ceil(totalSeconds / 60);
+  
+        const formattedTime = moment.utc(totalSeconds * 1000).format("HH:mm:ss");
 
         await knex('attendance')
           .where("attendance_id", data.attendance_id)
           .update({
             logout_date: data.login_date,
             logout_time: "20:00:00",
-            total_minutes: totalMinutes
+            total_minutes: totalMinutes,
+            total_time: formattedTime
           });
       }
     }

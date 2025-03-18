@@ -159,3 +159,5 @@ CREATE TABLE calendar (
     status ENUM('0', '1') NOT NULL DEFAULT '0',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE ca_firm.attendance ADD COLUMN total_time TIME AFTER total_minutes;
