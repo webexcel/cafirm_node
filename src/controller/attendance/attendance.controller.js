@@ -228,10 +228,10 @@ export const getAttendanceByDate = async (req, res, next) => {
 
     for (const data of getAttendanceRes) {
       const employee = await knex("employees")
-          .select("name")
-          .where({ employee_id: data.employee_id }).first();
-          data["employee_name"] = employee?.name || null;
-  }
+        .select("name")
+        .where({ employee_id: data.employee_id }).first();
+      data["employee_name"] = employee?.name || null;
+    }
 
     if (getAttendanceRes) {
       logger.info("Attendance List retrieved successfully", {
@@ -258,6 +258,96 @@ export const getAttendanceByDate = async (req, res, next) => {
       error: err.message,
       username: req.user?.user_name,
       reqdetails: "attendance-getAttendanceByDate",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
+export const checkTodayAttendance = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { emp_id } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Today Attendance List Request Received", {
+      username: user_name,
+      reqdetails: "attendance-checkTodayAttendance",
+    });
+
+    knex = await createKnexInstance(dbname);
+
+    const getAttendanceRes = await knex('attendance')
+      .select('*')
+      .whereRaw("DATE(created_at) = CURDATE()")
+      .andWhere("employee_id", emp_id);
+
+    let returnData = [];
+
+    let todayMinutes = 0;
+
+    if (getAttendanceRes.length > 0) {
+      for (let data of getAttendanceRes) {
+        if (data.logout_time == null) {
+          returnData.push(data);
+        } else {
+          todayMinutes += data.total_minutes;
+        }
+      }
+    }
+
+    const recordsToUpdate = await knex('attendance')
+      .select(knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', 'attendance_id')
+      .where("employee_id", emp_id)
+      .whereRaw("DATE(login_date) < CURDATE()")
+      .whereNull("logout_time");
+
+    if (recordsToUpdate.length > 0) {
+      for (const data of recordsToUpdate) {
+        const loginDateTime = moment(`${data.login_date} ${data.login_time}`, "YYYY-MM-DD HH:mm:ss");
+        const logoutDateTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
+
+        const totalMinutes = logoutDateTime.diff(loginDateTime, 'minutes');
+
+        await knex('attendance')
+          .where("attendance_id", data.attendance_id)
+          .update({
+            logout_date: data.login_date,
+            logout_time: "20:00:00",
+            total_minutes: totalMinutes
+          });
+      }
+    }
+
+    if (getAttendanceRes) {
+      logger.info("Today Attendance List retrieved successfully", {
+        username: user_name,
+        reqdetails: "attendance-checkTodayAttendance",
+      });
+      return res.status(200).json({
+        message: "Today Attendance List retrieved successfully",
+        data: returnData,
+        today_work_time: todayMinutes,
+        status: true,
+      });
+    } else {
+      logger.warn("No Today Attendance Details found", {
+        username: user_name,
+        reqdetails: "attendance-checkTodayAttendance",
+      });
+      return res.status(404).json({
+        message: "No Today Attendance Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Today Attendance List", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "attendance-checkTodayAttendance",
     });
     next(err);
   } finally {
