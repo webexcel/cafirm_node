@@ -325,7 +325,7 @@ export const checkTodayAttendance = async (req, res, next) => {
         const logoutDateTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
 
         const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds');
-        const totalMinutes = Math.floor(totalSeconds / 60);
+        let totalMinutes = Math.floor(totalSeconds / 60);
         const extraMinute = (totalSeconds % 60) > 30 ? 1 : 0;
         totalMinutes += extraMinute;
 
