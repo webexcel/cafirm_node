@@ -145,8 +145,11 @@ export const logoutAttendance = async (req, res, next) => {
     if (data.length > 0) {
       const loginDateTime = moment(`${data[0].login_date} ${data[0].login_time}`, "YYYY-MM-DD HH:mm:ss");
       const logoutDateTime = moment(`${logout_date} ${logout_time}`, "YYYY-MM-DD HH:mm:ss");
-      const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds'); 
+      const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds');
       totalMinutes = Math.ceil(totalSeconds / 60);
+      totalMinutes = Math.floor(totalSeconds / 60);
+      const extraMinute = (totalSeconds % 60) > 30 ? 1 : 0;
+      totalMinutes += extraMinute;
 
       formattedTime = moment.utc(totalSeconds * 1000).format("HH:mm:ss");
     } else {
@@ -293,6 +296,8 @@ export const checkTodayAttendance = async (req, res, next) => {
     let returnData = [];
 
     let todayMinutes = 0;
+    let totalSeconds = 0;
+    let totalTime;
 
     if (getAttendanceRes.length > 0) {
       for (let data of getAttendanceRes) {
@@ -300,6 +305,10 @@ export const checkTodayAttendance = async (req, res, next) => {
           returnData.push(data);
         } else {
           todayMinutes += data.total_minutes;
+          const timeParts = data.total_time?.split(":").map(Number); // Convert "HH:MM:SS" -> [HH, MM, SS]
+          const seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+          totalSeconds += seconds;
+          totalTime = moment.utc(totalSeconds * 1000).format("HH:mm:ss");
         }
       }
     }
@@ -315,9 +324,11 @@ export const checkTodayAttendance = async (req, res, next) => {
         const loginDateTime = moment(`${data.login_date} ${data.login_time}`, "YYYY-MM-DD HH:mm:ss");
         const logoutDateTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
 
-        const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds'); 
-        const totalMinutes = Math.ceil(totalSeconds / 60);
-  
+        const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds');
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        const extraMinute = (totalSeconds % 60) > 30 ? 1 : 0;
+        totalMinutes += extraMinute;
+
         const formattedTime = moment.utc(totalSeconds * 1000).format("HH:mm:ss");
 
         await knex('attendance')
@@ -339,7 +350,8 @@ export const checkTodayAttendance = async (req, res, next) => {
       return res.status(200).json({
         message: "Today Attendance List retrieved successfully",
         data: returnData,
-        today_work_time: todayMinutes,
+        today_work_minutes: todayMinutes,
+        today_work_time: totalTime,
         status: true,
       });
     } else {
