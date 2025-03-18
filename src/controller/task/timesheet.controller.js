@@ -16,22 +16,22 @@ export const getTimesheet = async (req, res, next) => {
         const getTSRes = await knex('time_sheets').select('*').where('status', '0');
 
         for (const task of getTSRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: task.task_id }).first();
+            task["task_name"] = taskName?.task_name || null;
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
             task["employee_name"] = employee?.name || null;
             const client = await knex("clients")
                 .select("client_name")
-                .where({ client_id: task.client_id }).first();
+                .where({ client_id: taskName.client_id }).first();
             task["client_name"] = client?.client_name || null;
             const service = await knex("services")
                 .select("service_name")
-                .where({ service_id: task.service_id }).first();
+                .where({ service_id: taskName.service }).first();
             task["service_name"] = service?.service_name || null;
-            const taskName = await knex("tasks")
-                .select("task_name")
-                .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
         }
 
         if (getTSRes) {
@@ -565,22 +565,22 @@ export const viewTimesheet = async (req, res, next) => {
         const getTSRes = await query;
 
         for (const task of getTSRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: task.task_id }).first();
+            task["task_name"] = taskName?.task_name || null;
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
             task["employee_name"] = employee?.name || null;
             const client = await knex("clients")
                 .select("client_name")
-                .where({ client_id: task.client_id }).first();
+                .where({ client_id: taskName.client_id }).first();
             task["client_name"] = client?.client_name || null;
             const service = await knex("services")
                 .select("service_name")
-                .where({ service_id: task.service_id }).first();
+                .where({ service_id: taskName.service }).first();
             task["service_name"] = service?.service_name || null;
-            const taskName = await knex("tasks")
-                .select("task_name")
-                .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
         }
 
         if (getTSRes) {
