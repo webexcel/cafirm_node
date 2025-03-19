@@ -13,7 +13,7 @@ export const getTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets').select('*').where('status', '0');
+        const getTSRes = await knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0');
 
         for (const task of getTSRes) {
             const taskName = await knex("tasks")
@@ -80,7 +80,7 @@ export const getTimesheetLimited = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets').select('*').where('status', '0').orderBy('created_at', 'desc').limit(5);
+        const getTSRes = await knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').orderBy('created_at', 'desc').limit(5);
 
         for (const task of getTSRes) {
             const employee = await knex("employees")
@@ -548,7 +548,7 @@ export const viewTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('time_sheets').select('*').where('status', '0').whereBetween('date', [startdate, enddate]);
+        let query = knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').whereBetween('date', [startdate, enddate]);
 
         if (client_id && client_id != "All") {
             query = query.where('time_sheets.client_id', client_id);

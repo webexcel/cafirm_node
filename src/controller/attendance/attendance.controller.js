@@ -289,7 +289,7 @@ export const checkTodayAttendance = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const getAttendanceRes = await knex('attendance')
-      .select('*')
+      .select('*', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"))
       .whereRaw("DATE(created_at) = CURDATE()")
       .andWhere("employee_id", emp_id);
 

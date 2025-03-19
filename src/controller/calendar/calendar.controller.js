@@ -13,7 +13,7 @@ export const getCalendarDetails = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getCalendarResult = await knex('calendar').select('*').where("status", "0");
+    const getCalendarResult = await knex('calendar').select('*', knex.raw("DATE_FORMAT(start_date, '%Y-%m-%d') as start_date"), knex.raw("DATE_FORMAT(end_date, '%Y-%m-%d') as end_date")).where("status", "0");
 
     if (getCalendarResult) {
       logger.info("Events List retrieved successfully", {
