@@ -161,3 +161,5 @@ CREATE TABLE calendar (
 );
 
 ALTER TABLE ca_firm.attendance ADD COLUMN total_time TIME AFTER total_minutes;
+
+ALTER TABLE ca_firm.calendar ADD COLUMN color VARCHAR(20) AFTER title;
