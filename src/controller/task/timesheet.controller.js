@@ -340,7 +340,7 @@ export const getTaskList = async (req, res, next) => {
 export const addTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, task_id, date, totalMinutes, description } = req.body;
+        const { emp_id, task_id, date, time, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Time-Sheet Request Received", {
@@ -348,7 +348,7 @@ export const addTimesheet = async (req, res, next) => {
             reqdetails: "task-addTimesheet",
         });
 
-        if (!emp_id || !totalMinutes) {
+        if (!emp_id || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addTimesheet",
@@ -358,6 +358,9 @@ export const addTimesheet = async (req, res, next) => {
                 status: false,
             });
         }
+
+        const [hours, minutes] = time.split(":").map(Number);
+        const tot_minutes = hours * 60 + minutes;
 
         knex = await createKnexInstance(dbname);
 
@@ -388,7 +391,8 @@ export const addTimesheet = async (req, res, next) => {
             // service_id: serviceId,
             task_id: task_id,
             date: date,
-            total_minutes: totalMinutes,
+            total_minutes: tot_minutes,
+            total_time: time,
             description: description
         });
 
@@ -424,7 +428,7 @@ export const addTimesheet = async (req, res, next) => {
 export const editTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { ts_id, date, totalMinutes, description } = req.body;
+        const { ts_id, date, time, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Time-Sheet Request Received", {
@@ -432,7 +436,7 @@ export const editTimesheet = async (req, res, next) => {
             reqdetails: "task-editTimesheet",
         });
 
-        if (!ts_id || !date || !totalMinutes) {
+        if (!ts_id || !date || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-editTimesheet",
@@ -443,11 +447,15 @@ export const editTimesheet = async (req, res, next) => {
             });
         }
 
+        const [hours, minutes] = time.split(":").map(Number);
+        const tot_minutes = hours * 60 + minutes;
+
         knex = await createKnexInstance(dbname);
 
         const updateTSResult = await knex('time_sheets').update({
             date: date,
-            total_minutes: totalMinutes,
+            total_minutes: tot_minutes,
+            total_time: time,
             description: description
         }).where({ time_sheet_id: ts_id });
 
