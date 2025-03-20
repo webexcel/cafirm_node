@@ -64,11 +64,11 @@ export const getTasksByType = async (req, res, next) => {
             task["assigned_to"] = await Promise.all(
                 mappedData.map(async (data) => {
                     const employee = await knex("employees")
-                        .select("name")
+                        .select("name", "photo")
                         .where({ employee_id: data.employee_id })
                         .first();
 
-                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                    return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                 })
             );
 
@@ -145,11 +145,11 @@ export const getTasksByPriority = async (req, res, next) => {
             task["assigned_to"] = await Promise.all(
                 mappedData.map(async (data) => {
                     const employee = await knex("employees")
-                        .select("name")
+                        .select("name", "photo")
                         .where({ employee_id: data.employee_id })
                         .first();
 
-                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                    return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                 })
             );
 
@@ -555,11 +555,11 @@ export const getViewTasks = async (req, res, next) => {
                 task["assignTo"] = await Promise.all(
                     mappedData.map(async (data) => {
                         const employee = await knex("employees")
-                            .select("name")
+                            .select("name", "photo")
                             .where({ employee_id: data.employee_id })
                             .first();
 
-                        return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                        return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                     })
                 );
             }
