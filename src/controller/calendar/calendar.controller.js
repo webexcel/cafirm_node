@@ -13,7 +13,7 @@ export const getCalendarDetails = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getCalendarResult = await knex('calendar').select('*').where("status", "0");
+    const getCalendarResult = await knex('calendar').select('*', knex.raw("DATE_FORMAT(start_date, '%Y-%m-%d') as start_date"), knex.raw("DATE_FORMAT(end_date, '%Y-%m-%d') as end_date")).where("status", "0");
 
     if (getCalendarResult) {
       logger.info("Events List retrieved successfully", {
@@ -52,7 +52,7 @@ export const getCalendarDetails = async (req, res, next) => {
 export const addEvent = async (req, res, next) => {
   let knex = null;
   try {
-    const { title, description, start_date, end_date } = req.body;
+    const { title, description, start_date, end_date, color } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Event Request Received", {
@@ -98,7 +98,8 @@ export const addEvent = async (req, res, next) => {
         title: title,
         description: description,
         start_date: start_date,
-        end_date: end_date
+        end_date: end_date,
+        color: color
       });
 
     if (insertEventRes) {
@@ -133,7 +134,7 @@ export const addEvent = async (req, res, next) => {
 export const editEvent = async (req, res, next) => {
   let knex = null;
   try {
-    const { evt_id, title, description, start_date, end_date } = req.body;
+    const { evt_id, title, description, start_date, end_date, color } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Edit Event Request Received", {
@@ -154,7 +155,7 @@ export const editEvent = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const updateResult = await knex("calendar").update({ title: title, description: description, start_date: start_date, end_date: end_date }).where({ cal_id: evt_id });
+    const updateResult = await knex("calendar").update({ title: title, description: description, start_date: start_date, end_date: end_date, color: color }).where({ cal_id: evt_id });
 
     if (updateResult) {
       logger.info("Event updated successfully", {

@@ -33,7 +33,7 @@ export const getTasksByType = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let query = knex('tasks')
-            .select('tasks.*')
+            .select('tasks.*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(duedate, '%Y-%m-%d') as due_date"))
             .orderByRaw("FIELD(tasks.priority, 'Critical', 'High', 'Medium', 'Low')");
 
         if (statusMap[showType] !== null && statusMap[showType] !== undefined) {
@@ -64,11 +64,11 @@ export const getTasksByType = async (req, res, next) => {
             task["assigned_to"] = await Promise.all(
                 mappedData.map(async (data) => {
                     const employee = await knex("employees")
-                        .select("name")
+                        .select("name", "photo")
                         .where({ employee_id: data.employee_id })
                         .first();
 
-                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                    return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                 })
             );
 
@@ -131,7 +131,7 @@ export const getTasksByPriority = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let getTaskRes = await knex('tasks')
-            .select('*')
+            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"))
             .where('due_date', '>=', new Date())
             .orderByRaw("FIELD(priority, 'Critical', 'High', 'Medium', 'Low')")
             .orderBy('due_date', 'asc')
@@ -145,11 +145,11 @@ export const getTasksByPriority = async (req, res, next) => {
             task["assigned_to"] = await Promise.all(
                 mappedData.map(async (data) => {
                     const employee = await knex("employees")
-                        .select("name")
+                        .select("name", "photo")
                         .where({ employee_id: data.employee_id })
                         .first();
 
-                    return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                    return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                 })
             );
 
@@ -507,7 +507,7 @@ export const getViewTasks = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('tasks').select("*");
+        let query = knex('tasks').select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"));
 
         if (cleint_id && cleint_id != "All") {
             query = query.where('tasks.client_id', cleint_id);
@@ -555,11 +555,11 @@ export const getViewTasks = async (req, res, next) => {
                 task["assignTo"] = await Promise.all(
                     mappedData.map(async (data) => {
                         const employee = await knex("employees")
-                            .select("name")
+                            .select("name", "photo")
                             .where({ employee_id: data.employee_id })
                             .first();
 
-                        return { emp_id: data.employee_id, emp_name: employee?.name || null };
+                        return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
                     })
                 );
             }

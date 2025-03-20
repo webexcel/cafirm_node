@@ -275,3 +275,14 @@ VALUES
 (1, 5);
 
 -------------------end----------
+ALTER TABLE ca_firm.calendar ADD COLUMN color VARCHAR(20) AFTER title;
+
+ALTER TABLE ca_firm.time_sheets ADD COLUMN total_time VARCHAR(10) AFTER total_minutes;
+
+ALTER TABLE `ca_firm`.`time_sheets` 
+DROP FOREIGN KEY `time_sheets_ibfk_2`,
+DROP FOREIGN KEY `time_sheets_ibfk_1`;
+
+ALTER TABLE `ca_firm`.`time_sheets` 
+DROP INDEX `time_sheets_ibfk_2` ,
+DROP INDEX `employee_id` ;

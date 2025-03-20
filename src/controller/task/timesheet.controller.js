@@ -13,7 +13,7 @@ export const getTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets').select('*').where('status', '0');
+        const getTSRes = await knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0');
 
         for (const task of getTSRes) {
             const taskName = await knex("tasks")
@@ -80,7 +80,7 @@ export const getTimesheetLimited = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets').select('*').where('status', '0').orderBy('created_at', 'desc').limit(5);
+        const getTSRes = await knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').orderBy('created_at', 'desc').limit(5);
 
         for (const task of getTSRes) {
             const employee = await knex("employees")
@@ -340,7 +340,7 @@ export const getTaskList = async (req, res, next) => {
 export const addTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, task_id, date, totalMinutes, description } = req.body;
+        const { emp_id, task_id, date, time, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Time-Sheet Request Received", {
@@ -348,7 +348,7 @@ export const addTimesheet = async (req, res, next) => {
             reqdetails: "task-addTimesheet",
         });
 
-        if (!emp_id || !totalMinutes) {
+        if (!emp_id || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addTimesheet",
@@ -359,28 +359,31 @@ export const addTimesheet = async (req, res, next) => {
             });
         }
 
+        const [hours, minutes] = time.split(":").map(Number);
+        const tot_minutes = hours * 60 + minutes;
+
         knex = await createKnexInstance(dbname);
 
-        const existingTS = await knex('time_sheets')
-            .where(function () {
-                this.where('employee_id', emp_id)
-                    // .andWhere('client_id', clientId)
-                    // .andWhere('service_id', serviceId)
-                    .andWhere('date', date);
-            })
-            .where('status', '0')
-            .first();
+        // const existingTS = await knex('time_sheets')
+        //     .where(function () {
+        //         this.where('employee_id', emp_id)
+        //             // .andWhere('client_id', clientId)
+        //             // .andWhere('service_id', serviceId)
+        //             .andWhere('date', date);
+        //     })
+        //     .where('status', '0')
+        //     .first();
 
-        if (existingTS) {
-            logger.error("Duplicates in Time-Sheet Entry", {
-                username: user_name,
-                reqdetails: "task-addTimesheet",
-            });
-            return res.status(500).json({
-                message: "Duplicates in Time-Sheet Entry for employee/client/service/date.",
-                status: false,
-            });
-        }
+        // if (existingTS) {
+        //     logger.error("Duplicates in Time-Sheet Entry", {
+        //         username: user_name,
+        //         reqdetails: "task-addTimesheet",
+        //     });
+        //     return res.status(500).json({
+        //         message: "Duplicates in Time-Sheet Entry for employee/client/service/date.",
+        //         status: false,
+        //     });
+        // }
 
         const insertTSResult = await knex('time_sheets').insert({
             employee_id: emp_id,
@@ -388,7 +391,8 @@ export const addTimesheet = async (req, res, next) => {
             // service_id: serviceId,
             task_id: task_id,
             date: date,
-            total_minutes: totalMinutes,
+            total_minutes: tot_minutes,
+            total_time: time,
             description: description
         });
 
@@ -424,7 +428,7 @@ export const addTimesheet = async (req, res, next) => {
 export const editTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { ts_id, date, totalMinutes, description } = req.body;
+        const { ts_id, date, time, description } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Time-Sheet Request Received", {
@@ -432,7 +436,7 @@ export const editTimesheet = async (req, res, next) => {
             reqdetails: "task-editTimesheet",
         });
 
-        if (!ts_id || !date || !totalMinutes) {
+        if (!ts_id || !date || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-editTimesheet",
@@ -443,11 +447,15 @@ export const editTimesheet = async (req, res, next) => {
             });
         }
 
+        const [hours, minutes] = time.split(":").map(Number);
+        const tot_minutes = hours * 60 + minutes;
+
         knex = await createKnexInstance(dbname);
 
         const updateTSResult = await knex('time_sheets').update({
             date: date,
-            total_minutes: totalMinutes,
+            total_minutes: tot_minutes,
+            total_time: time,
             description: description
         }).where({ time_sheet_id: ts_id });
 
@@ -548,7 +556,7 @@ export const viewTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('time_sheets').select('*').where('status', '0').whereBetween('date', [startdate, enddate]);
+        let query = knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').whereBetween('date', [startdate, enddate]);
 
         if (client_id && client_id != "All") {
             query = query.where('time_sheets.client_id', client_id);
