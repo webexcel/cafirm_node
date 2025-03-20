@@ -5,12 +5,16 @@ import compression from 'compression';
 import mainRoutes from "./src/routes/mainRoute.js";
 import { logger } from "./configs/winston.js";
 import { HttpError } from "./src/models/http-error.js";
+import path from 'path';
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3006;
 
+const profilesDir = path.resolve("C:\\raja\\profiles");
 
 const app = express();
 
+//profile images
+app.use('/profiles', express.static(profilesDir));
 
 app.use(cors("*"));
 
