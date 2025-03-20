@@ -464,3 +464,84 @@ export const resetPassword = async (req, res, next) => {
     }
   }
 };
+
+export const addUserAccount = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { name, password, role, employee_id} = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Add Employee Request Received", {
+      username: user_name,
+      reqdetails: "employee-addEmployee",
+    });
+
+    if (!name || !role || !password || !employee_id) {
+      logger.error("Mandatory fields are missing", {
+        username: user_name,
+        reqdetails: "employee-addEmployee",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+
+    knex = await createKnexInstance(dbname);
+
+    const existingEmployee = await knex('employees')
+      .where(function () {
+        this.where('name', name)
+          .andWhere('email', email)
+          .andWhere('phone', phone)
+      })
+      .andWhere('status', '0')
+      .first();
+
+    if (existingEmployee) {
+      logger.error("Duplicates in Employee Entry", {
+        username: user_name,
+        reqdetails: "client-addClient",
+      });
+      return res.status(500).json({
+        message: "Duplicates in Employee Entry for Name/Email/Phone",
+        status: false,
+      });
+    }
+
+    const insertEmpResult = await knex('employees')
+      .insert({
+        name: name,
+        email: email,
+        phone: phone,
+        role: role
+      });
+
+    if (insertEmpResult) {
+      logger.info("Employee inserted successfully", {
+        username: user_name,
+        reqdetails: "employee-addEmployee",
+      });
+      return res.status(200).json({
+        message: "Employee inserted successfully",
+        status: true,
+      });
+    } else {
+      logger.error("Failed to insert Employee", {
+        username: user_name,
+        reqdetails: "employee-addEmployee",
+      });
+      return res.status(500).json({
+        message: "Failed to insert Employee",
+        status: false,
+      });
+    }
+  } catch (error) {
+    console.error("Error inserting Employee:", error);
+    next(error);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
