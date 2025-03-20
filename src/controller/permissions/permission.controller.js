@@ -160,6 +160,7 @@ export const getUserPermissions = async (req, res, next) => {
       .select(
         "parent_m.menu_id as parent_menu_id",
         "parent_m.menu_name as parent_menu",
+        "parent_m.parent_id as parent_id",
         "parent_m.sequence_number as parent_sequence",
         "m.menu_id as submenu_id",
         "m.menu_name as submenu",
