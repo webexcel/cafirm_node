@@ -315,7 +315,7 @@ export const checkTodayAttendance = async (req, res, next) => {
 
     const recordsToUpdate = await knex('attendance')
       .select(knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', 'attendance_id')
-      .where("employee_id", emp_id)
+      // .where("employee_id", emp_id)
       .whereRaw("DATE(login_date) < CURDATE()")
       .whereNull("logout_time");
 
