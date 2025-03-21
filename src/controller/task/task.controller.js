@@ -8,10 +8,10 @@ export const getTasksByType = async (req, res, next) => {
         const { dbname, user_name } = req.user;
 
         const statusMap = {
-            'ALL': null,
-            'PENDING': '0',
-            'INPROCESS': '1',
-            'COMPLETED': '2'
+            "all": null,
+            "pending": '0',
+            "inprecess": '1',
+            "complotee": '2'
         };
 
         logger.info("Get Task List Request Received", {
@@ -42,11 +42,11 @@ export const getTasksByType = async (req, res, next) => {
             query = query.whereIn('tasks.status', ['0', '1', '2']);
         }
 
-        if (client_id && client_id != "All") {
+        if (client_id && client_id != "all") {
             query = query.where('tasks.client_id', client_id);
         }
 
-        if (employee_id && employee_id != "All") {
+        if (employee_id && employee_id != "all") {
             query = query
                 .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
                 .where('employee_task_mapping.employee_id', employee_id)
@@ -494,10 +494,10 @@ export const getViewTasks = async (req, res, next) => {
         const { dbname, user_name } = req.user;
 
         const statusMap = {
-            'ALL': null,
-            'PENDING': '0',
-            'INPROCESS': '1',
-            'COMPLETED': '2'
+            "all": null,
+            "pending": '0',
+            "inprecess": '1',
+            "complotee": '2'
         };
 
         logger.info("Get View Task List Request Received", {
@@ -509,15 +509,15 @@ export const getViewTasks = async (req, res, next) => {
 
         let query = knex('tasks').select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"));
 
-        if (cleint_id && cleint_id != "All") {
+        if (cleint_id && cleint_id != "all") {
             query = query.where('tasks.client_id', cleint_id);
         }
 
-        if (service_id && service_id != "All") {
+        if (service_id && service_id != "all") {
             query = query.where('tasks.service', service_id);
         }
 
-        if (priority && priority != "All") {
+        if (priority && priority != "all") {
             query = query.where('tasks.priority', priority);
         }
 
@@ -529,7 +529,7 @@ export const getViewTasks = async (req, res, next) => {
 
         let viewTaskResult = await query;
 
-        if (emp_id && emp_id != "All") {
+        if (emp_id && emp_id != "all") {
             let filteredTasks = [];
 
             for (const task of viewTaskResult) {
@@ -566,7 +566,7 @@ export const getViewTasks = async (req, res, next) => {
         }
 
         for (const task of viewTaskResult) {
-            if (emp_id && emp_id != "All") {
+            if (emp_id && emp_id != "all") {
                 const employee = await knex("employees")
                     .select("name")
                     .where({ employee_id: task.assignTo[0]["emp_id"] }).first();

@@ -8,10 +8,10 @@ export const getTicketsByType = async (req, res, next) => {
         const { dbname, user_name } = req.user;
 
         const statusMap = {
-            'ALL': null,
-            'PENDING': '0',
-            'INPROCESS': '1',
-            'COMPLETED': '2'
+            "all": null,
+            "pending": '0',
+            "inprecess": '1',
+            "complotee": '2'
         };
 
         logger.info("Get Tickets List Request Received", {

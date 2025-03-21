@@ -146,7 +146,7 @@ export const getService = async (req, res, next) => {
 
         let getTaskRes;
 
-        if (client_id && client_id != "All") {
+        if (client_id && client_id != "all") {
             getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
         } else {
             getTaskRes = await knex('tasks').select('*').where({ 'status': '0' });
@@ -205,11 +205,11 @@ export const getemployee = async (req, res, next) => {
 
         let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
 
-        if (client_id && client_id != "All") {
+        if (client_id && client_id != "all") {
             query = query.where({ 'client_id': client_id });
         }
 
-        if (service_id && service_id != "All") {
+        if (service_id && service_id != "all") {
             query = query.where({ 'service': service_id });
         }
 
@@ -275,11 +275,11 @@ export const getTaskList = async (req, res, next) => {
 
         let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
 
-        if (client_id && client_id != "All") {
+        if (client_id && client_id != "all") {
             query = query.where({ 'client_id': client_id });
         }
 
-        if (service_id && service_id != "All") {
+        if (service_id && service_id != "all") {
             query = query.where({ 'service': service_id });
         }
 
@@ -558,15 +558,15 @@ export const viewTimesheet = async (req, res, next) => {
 
         let query = knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').whereBetween('date', [startdate, enddate]);
 
-        if (client_id && client_id != "All") {
+        if (client_id && client_id != "all") {
             query = query.where('time_sheets.client_id', client_id);
         }
 
-        if (service_id && service_id != "All") {
+        if (service_id && service_id != "all") {
             query = query.where('time_sheets.service_id', service_id);
         }
 
-        if (emp_id && emp_id != "All") {
+        if (emp_id && emp_id != "all") {
             query = query.where('time_sheets.employee_id', emp_id);
         }
 
