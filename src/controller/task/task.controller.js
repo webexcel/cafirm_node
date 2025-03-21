@@ -164,7 +164,7 @@ export const getTasksByPriority = async (req, res, next) => {
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
 
-            const tsData = await knex("time_sheets").select("*").where({"task_id": task.task_id});
+            const tsData = await knex("time_sheets").select("*").where({ "task_id": task.task_id });
             let totalMinutes = 0;
             tsData.map(data => {
                 totalMinutes += data.total_minutes;
@@ -583,12 +583,16 @@ export const getViewTasks = async (req, res, next) => {
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
 
-            const tsData = await knex("time_sheets").select("*").where({"task_id": task.task_id});
-            let totalMinutes = 0;
-            tsData.map(data => {
-                totalMinutes += data.total_minutes;
-            });
-            task["total_minutes"] = totalMinutes;
+            const tsData = await knex("time_sheets")
+                .select(
+                    knex.raw("SUM(total_minutes) as total_minutes"),
+                    knex.raw("SEC_TO_TIME(SUM(TIME_TO_SEC(total_time))) as total_time") // Sum of total_time
+                )
+                .where({ "task_id": task.task_id })
+                .first();
+
+            task["total_minutes"] = tsData.total_minutes || 0;
+            task["total_time"] = tsData.total_time || "00:00:00";
         }
 
         if (viewTaskResult) {
