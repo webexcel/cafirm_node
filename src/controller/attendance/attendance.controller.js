@@ -217,13 +217,14 @@ export const getAttendanceByDate = async (req, res, next) => {
       .select(
         'employee_id',
         knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"),
-        'login_time',
-        knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"),
-        'logout_time',
-        'total_minutes',
-        'total_time'
+        knex.raw("MIN(login_time) as login_time"),
+        knex.raw("DATE_FORMAT(MAX(logout_date), '%Y-%m-%d') as logout_date"),
+        knex.raw("MAX(logout_time) as logout_time"),
+        knex.raw("SUM(total_minutes) as total_minutes"),
+        knex.raw("SEC_TO_TIME(SUM(TIME_TO_SEC(total_time))) as total_time")
       )
-      .orderBy("created_at", "desc");
+      .groupBy('employee_id', 'login_date')
+      .orderBy("login_date", "desc");
 
     if (emp_id) {
       query.where("employee_id", emp_id)
