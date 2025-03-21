@@ -65,12 +65,12 @@ export const addPermission = async (req, res, next) => {
 export const assignPermission = async (req, res, next) => {
   let knex = null;
   try {
-    const { user_id, permission_id } = req.body;
-    const { dbname, UserId } = req.user;
+    const { employee_id, permission_id } = req.body;
+    const { dbname, name } = req.user;
     // Validate required fields
-    if (!user_id || !permission_id) {
+    if (!employee_id || !permission_id) {
       return res.status(400).json({
-        message: "user_id, permission_id are required fields.",
+        message: "employee_id, permission_id are required fields.",
         status: false,
       });
     }
@@ -79,8 +79,8 @@ export const assignPermission = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     // Check if the user exists
-    const userExists = await knex("um_users")
-      .where({ UserId: user_id })
+    const userExists = await knex("employees")
+      .where({ employee_id: employee_id })
       .first();
     if (!userExists) {
       return res.status(404).json({
@@ -102,14 +102,14 @@ export const assignPermission = async (req, res, next) => {
 
     // Insert the user permission assignment
     await knex("tbl_user_permissions").insert({
-      user_id,
+      user_id: employee_id,
       permission_id,
-      granted_by: UserId,
+      granted_by: employee_id,
     });
 
     // Log and respond
     logger.info(
-      `Permission ${permission_id} assigned to User ${user_id} by ${UserId}`
+      `Permission ${permission_id} assigned to User ${name}`
     );
     res.status(201).json({
       message: "Permission assigned successfully.",
@@ -160,6 +160,7 @@ export const getUserPermissions = async (req, res, next) => {
       .select(
         "parent_m.menu_id as parent_menu_id",
         "parent_m.menu_name as parent_menu",
+        "parent_m.parent_id as parent_id",
         "parent_m.sequence_number as parent_sequence",
         "m.menu_id as submenu_id",
         "m.menu_name as submenu",
@@ -463,10 +464,10 @@ export const getAllUserList = async (req, res, next) => {
     knex = await createKnexInstance();
 
     // Fetch all users sets
-    const usersList = await knex("um_users").select(
-      "UserId",
-      "UserName",
-      "DisplayName"
+    const usersList = await knex("employees").select(
+      "employee_id",
+      "name",
+      "email"
     );
     
     // Respond with the structured data

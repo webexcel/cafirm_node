@@ -464,3 +464,32 @@ export const resetPassword = async (req, res, next) => {
     }
   }
 };
+
+export const addUserAccount = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { employee_id, name, password } = req.body;
+    if (!employee_id || !name || !password) {
+      return res.status(400).json({ message: "Mandatory fields are missing", status: false });
+    }
+
+    knex = await createKnexInstance(req.user.dbname);
+
+    // Find employee
+    const employee = await knex('employees').where({ employee_id }).first();
+    if (!employee) return res.status(404).json({ message: "Employee not found", status: false });
+
+    // Hash password and update user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const updated = await knex('employees').where({ employee_id }).update({ name, password_hash: hashedPassword });
+
+    return updated
+      ? res.status(200).json({ message: "Employee updated successfully", status: true })
+      : res.status(500).json({ message: "Update failed", status: false });
+
+  } catch (error) {
+    next(error);
+  } finally {
+    if (knex) knex.destroy();
+  }
+};
