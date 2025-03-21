@@ -205,11 +205,11 @@ export const getemployee = async (req, res, next) => {
 
         let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
 
-        if (client_id) {
+        if (client_id && client_id != "All") {
             query = query.where({ 'client_id': client_id });
         }
 
-        if (service_id) {
+        if (service_id && service_id != "All") {
             query = query.where({ 'service': service_id });
         }
 
@@ -275,11 +275,11 @@ export const getTaskList = async (req, res, next) => {
 
         let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
 
-        if (client_id) {
+        if (client_id && client_id != "All") {
             query = query.where({ 'client_id': client_id });
         }
 
-        if (service_id) {
+        if (service_id && service_id != "All") {
             query = query.where({ 'service': service_id });
         }
 

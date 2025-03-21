@@ -42,11 +42,11 @@ export const getTasksByType = async (req, res, next) => {
             query = query.whereIn('tasks.status', ['0', '1', '2']);
         }
 
-        if (client_id) {
+        if (client_id && client_id != "All") {
             query = query.where('tasks.client_id', client_id);
         }
 
-        if (employee_id) {
+        if (employee_id && employee_id != "All") {
             query = query
                 .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
                 .where('employee_task_mapping.employee_id', employee_id)
