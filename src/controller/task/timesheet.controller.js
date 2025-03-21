@@ -146,7 +146,7 @@ export const getService = async (req, res, next) => {
 
         let getTaskRes;
 
-        if (client_id) {
+        if (client_id && client_id != "All") {
             getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
         } else {
             getTaskRes = await knex('tasks').select('*').where({ 'status': '0' });
