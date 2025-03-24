@@ -654,15 +654,17 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
                 .where({ employee_id: task.employee_id }).first();
             task["employee_name"] = employee?.name || null;
             const client = await knex("clients")
-                .select("client_name")
+                .select("client_name", "display_name")
                 .where({ client_id: taskName.client_id }).first();
             task["client_id"] = taskName.client_id;
             task["client_name"] = client?.client_name || null;
+            task["display_name"] = client?.display_name || null;
             const service = await knex("services")
-                .select("service_name")
+                .select("service_name", "service_short_name")
                 .where({ service_id: taskName.service }).first();
             task["service_id"] = taskName.service;
             task["service_name"] = service?.service_name || null;
+            task["service_short_name"] = service?.service_short_name || null;
         }
 
         if (getTSRes) {
