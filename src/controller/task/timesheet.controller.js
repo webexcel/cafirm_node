@@ -641,29 +641,29 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
 
         const getTSRes = await knex('time_sheets')
             .select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"))
-            .where({'status': '0', 'employee_id': emp_id})
-            .whereRaw("WEEK(`date`) = WEEK(CURDATE())");
+            .where({ 'status': '0', 'employee_id': emp_id })
+            .whereRaw("WEEK(`date`, 0) = WEEK(CURDATE(), 0)");
 
-            for (const task of getTSRes) {
-                const taskName = await knex("tasks")
-                    .select("*")
-                    .where({ task_id: task.task_id }).first();
-                task["task_name"] = taskName?.task_name || null;
-                const employee = await knex("employees")
-                    .select("name")
-                    .where({ employee_id: task.employee_id }).first();
-                task["employee_name"] = employee?.name || null;
-                const client = await knex("clients")
-                    .select("client_name")
-                    .where({ client_id: taskName.client_id }).first();
-                task["client_id"] = taskName.client_id;
-                task["client_name"] = client?.client_name || null;
-                const service = await knex("services")
-                    .select("service_name")
-                    .where({ service_id: taskName.service }).first();
-                task["service_id"] = taskName.service;
-                task["service_name"] = service?.service_name || null;
-            }
+        for (const task of getTSRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: task.task_id }).first();
+            task["task_name"] = taskName?.task_name || null;
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: task.employee_id }).first();
+            task["employee_name"] = employee?.name || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: taskName.client_id }).first();
+            task["client_id"] = taskName.client_id;
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: taskName.service }).first();
+            task["service_id"] = taskName.service;
+            task["service_name"] = service?.service_name || null;
+        }
 
         if (getTSRes) {
             logger.info("Time-Sheet Weekly List retrieved successfully", {
