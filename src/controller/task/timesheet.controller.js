@@ -1,5 +1,6 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import moment from 'moment';
 
 export const getTimesheet = async (req, res, next) => {
     let knex = null;
@@ -551,7 +552,7 @@ export const viewTimesheet = async (req, res, next) => {
 
         logger.info("Get Time-Sheet List Request Received", {
             username: user_name,
-            reqdetails: "task-getTimesheet",
+            reqdetails: "task-viewTimesheet",
         });
 
         knex = await createKnexInstance(dbname);
@@ -594,7 +595,7 @@ export const viewTimesheet = async (req, res, next) => {
         if (getTSRes) {
             logger.info("Time-Sheet List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getTimesheet",
+                reqdetails: "task-viewTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet List retrieved successfully",
@@ -604,7 +605,7 @@ export const viewTimesheet = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Details found", {
                 username: user_name,
-                reqdetails: "task-getTimesheet",
+                reqdetails: "task-viewTimesheet",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Details found",
@@ -615,9 +616,140 @@ export const viewTimesheet = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getTimesheet",
+            reqdetails: "task-viewTimesheet",
         });
         next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const viewWeeklyTimesheet = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Time-Sheet Weekly List Request Received", {
+            username: user_name,
+            reqdetails: "task-viewWeeklyTimesheet",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getTSRes = await knex('time_sheets')
+            .select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"))
+            .where('status', '0')
+            .whereRaw("WEEK(`date`) = WEEK(CURDATE())");
+
+            for (const task of getTSRes) {
+                const taskName = await knex("tasks")
+                    .select("*")
+                    .where({ task_id: task.task_id }).first();
+                task["task_name"] = taskName?.task_name || null;
+                const employee = await knex("employees")
+                    .select("name")
+                    .where({ employee_id: task.employee_id }).first();
+                task["employee_name"] = employee?.name || null;
+                const client = await knex("clients")
+                    .select("client_name")
+                    .where({ client_id: taskName.client_id }).first();
+                task["client_name"] = client?.client_name || null;
+                const service = await knex("services")
+                    .select("service_name")
+                    .where({ service_id: taskName.service }).first();
+                task["service_name"] = service?.service_name || null;
+            }
+
+        if (getTSRes) {
+            logger.info("Time-Sheet Weekly List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-viewWeeklyTimesheet",
+            });
+            return res.status(200).json({
+                message: "Time-Sheet Weekly List retrieved successfully",
+                data: getTSRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Time-Sheet Weekly Details found", {
+                username: user_name,
+                reqdetails: "task-viewWeeklyTimesheet",
+            });
+            return res.status(404).json({
+                message: "No Time-Sheet Weekly Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Time-Sheet Weekly List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-viewWeeklyTimesheet",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const updateWeeklyTimesheet = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { ts_id, time } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Update Weekly Time-Sheet Request Received", {
+            username: user_name,
+            reqdetails: "task-updateWeeklyTimesheet",
+        });
+
+        if (!ts_id || !time) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "task-updateWeeklyTimesheet",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        const [hours, minutes] = time.split(":").map(Number);
+        const tot_minutes = hours * 60 + minutes;
+
+        knex = await createKnexInstance(dbname);
+
+        const updateTSResult = await knex('time_sheets').update({
+            total_minutes: tot_minutes,
+            total_time: time
+        }).where({ time_sheet_id: ts_id });
+
+        if (updateTSResult) {
+            logger.info("Weekly Time-Sheet updated successfully", {
+                username: user_name,
+                reqdetails: "task-updateWeeklyTimesheet",
+            });
+            return res.status(200).json({
+                message: "Weekly Time-Sheet updated successfully",
+                status: true,
+            });
+        } else {
+            logger.error("Failed to update Weekly Time-Sheet", {
+                username: user_name,
+                reqdetails: "task-updateWeeklyTimesheet",
+            });
+            return res.status(500).json({
+                message: "Failed to update Weekly Time-Sheet",
+                status: false,
+            });
+        }
+    } catch (error) {
+        console.error("Error updating Weekly Time-Sheet:", error);
+        next(error);
     } finally {
         if (knex) {
             knex.destroy();

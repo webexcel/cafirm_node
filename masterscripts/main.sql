@@ -286,3 +286,6 @@ DROP FOREIGN KEY `time_sheets_ibfk_1`;
 ALTER TABLE `ca_firm`.`time_sheets` 
 DROP INDEX `time_sheets_ibfk_2` ,
 DROP INDEX `employee_id` ;
+
+ALTER TABLE `ca_firm`.`time_sheets`
+ADD COLUMN `week_id` INT AFTER `task_id`;
