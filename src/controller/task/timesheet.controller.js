@@ -704,7 +704,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
 export const updateWeeklyTimesheet = async (req, res, next) => {
     let knex = null;
     try {
-        const { ts_id, time } = req.body;
+        const { data } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Weekly Time-Sheet Request Received", {
@@ -712,26 +712,32 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
             reqdetails: "task-updateWeeklyTimesheet",
         });
 
-        if (!ts_id || !time) {
+        if (!data || data.length > 0) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-updateWeeklyTimesheet",
             });
             return res.status(400).json({
-                message: "Mandatory fields are missing",
+                message: "Mandatory fields are missing or empty",
                 status: false,
             });
         }
 
-        const [hours, minutes] = time.split(":").map(Number);
-        const tot_minutes = hours * 60 + minutes;
-
         knex = await createKnexInstance(dbname);
 
-        const updateTSResult = await knex('time_sheets').update({
-            total_minutes: tot_minutes,
-            total_time: time
-        }).where({ time_sheet_id: ts_id });
+        let updateTSResult = null;
+
+        for (const { id, time } of data) {
+            const [hours, minutes] = time.split(":").map(Number);
+            const tot_minutes = hours * 60 + minutes;
+        
+            updateTSResult = await knex('time_sheets')
+                .update({
+                    total_minutes: tot_minutes,
+                    total_time: time
+                })
+                .where({ time_sheet_id: id });
+        }
 
         if (updateTSResult) {
             logger.info("Weekly Time-Sheet updated successfully", {
