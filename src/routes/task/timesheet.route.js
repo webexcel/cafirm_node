@@ -25,7 +25,7 @@ tsRoutes.post("/deleteTimesheet", deleteTimesheet);
 
 tsRoutes.post("/viewTimesheet", viewTimesheet);
 
-tsRoutes.get("/viewWeeklyTimesheet", viewWeeklyTimesheet);
+tsRoutes.post("/viewWeeklyTimesheet", viewWeeklyTimesheet);
 
 tsRoutes.post("/updateWeeklyTimesheet", updateWeeklyTimesheet);
 
