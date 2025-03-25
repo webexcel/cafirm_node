@@ -651,14 +651,29 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         const tasks = await knex('tasks')
-            .select('tasks.*')
+            .distinct('tasks.task_id')
+            .select(
+                'tasks.task_id',
+                'tasks.task_name',
+                'tasks.client_id',
+                'tasks.description',
+                'tasks.service',
+                knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"),
+                knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date")
+            )
             .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
-            .where({'employee_task_mapping.employee_id': emp_id, 'employee_task_mapping.status': '0'});
+            .where(function () {
+                this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(CURDATE(), 0)")
+                    .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)");
+            })
+            .andWhere({ 'employee_task_mapping.employee_id': emp_id, 'employee_task_mapping.status': '0' })
+            .andWhereNot('tasks.status', '3');
+
 
         for (let task of tasks) {
             const timesheets = await knex('time_sheets')
-                .select('*')
-                .where({'task_id': task.task_id, 'employee_id': emp_id});
+                .select('time_sheet_id', 'employee_id', 'task_id', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"), 'total_minutes', 'total_time', 'status')
+                .where({ 'task_id': task.task_id, 'employee_id': emp_id });
             task["timesheet"] = timesheets.length > 0 ? timesheets : [];
         }
 
@@ -678,28 +693,6 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
                 .where({ service_id: taskName.service }).first();
             taskList["service_name"] = service?.service_name || null;
             taskList["service_short_name"] = service?.service_short_name || null;
-            for (const task of taskList["timesheet"]) {
-                const taskName = await knex("tasks")
-                    .select("*")
-                    .where({ task_id: task.task_id }).first();
-                task["task_name"] = taskName?.task_name || null;
-                const employee = await knex("employees")
-                    .select("name")
-                    .where({ employee_id: task.employee_id }).first();
-                task["employee_name"] = employee?.name || null;
-                const client = await knex("clients")
-                    .select("client_name", "display_name")
-                    .where({ client_id: taskName.client_id }).first();
-                task["client_id"] = taskName.client_id;
-                task["client_name"] = client?.client_name || null;
-                task["display_name"] = client?.display_name || null;
-                const service = await knex("services")
-                    .select("service_name", "service_short_name")
-                    .where({ service_id: taskName.service }).first();
-                task["service_id"] = taskName.service;
-                task["service_name"] = service?.service_name || null;
-                task["service_short_name"] = service?.service_short_name || null;
-            }
         }
 
         if (tasks) {
