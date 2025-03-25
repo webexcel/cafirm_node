@@ -770,7 +770,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
                 const [hours, minutes] = ts.time.split(":").map(Number);
                 const tot_minutes = hours * 60 + minutes;
                 TSResult = await knex('time_sheets')
-                    .where({ employee_id: emp_id, date: ts.ts_date })
+                    .where({ employee_id: emp_id, task_id: task_id, date: ts.ts_date })
                     .first()
                     .then(async (existingRecord) => {
                         if (!existingRecord) {
