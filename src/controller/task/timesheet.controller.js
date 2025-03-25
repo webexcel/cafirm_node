@@ -653,12 +653,12 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         const tasks = await knex('tasks')
             .select('tasks.*')
             .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
-            .where('employee_task_mapping.employee_id', emp_id);
+            .where({'employee_task_mapping.employee_id': emp_id, 'employee_task_mapping.status': '0'});
 
         for (let task of tasks) {
             const timesheets = await knex('time_sheets')
                 .select('*')
-                .where('task_id', task.task_id);
+                .where({'task_id': task.task_id, 'employee_id': emp_id});
             task["timesheet"] = timesheets.length > 0 ? timesheets : [];
         }
 
