@@ -757,7 +757,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
         let TSResult = null;
 
         for (const ts of timesheets) {
-            if (ts.ts_id) {
+            if (ts.ts_id && ts.time != null) {
                 const [hours, minutes] = ts.time.split(":").map(Number);
                 const tot_minutes = hours * 60 + minutes;
                 TSResult = await knex('time_sheets')
@@ -766,7 +766,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
                         total_time: ts.time,
                         total_minutes: tot_minutes
                     });
-            } else if (!ts.ts_id && ts.time !== "00:00") {
+            } else if (!ts.ts_id && ts.time != null && ts.time !== "00:00") {
                 const [hours, minutes] = ts.time.split(":").map(Number);
                 const tot_minutes = hours * 60 + minutes;
                 TSResult = await knex('time_sheets')
