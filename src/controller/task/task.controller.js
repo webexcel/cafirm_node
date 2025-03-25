@@ -132,7 +132,8 @@ export const getTasksByPriority = async (req, res, next) => {
 
         let getTaskRes = await knex('tasks')
             .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"))
-            .where('due_date', '>=', new Date())
+            // .where('due_date', '>', new Date())
+            .whereRaw("DATE(CONVERT_TZ(due_date, '+00:00', '+05:30')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+00:00'))")
             .orderByRaw("FIELD(priority, 'Critical', 'High', 'Medium', 'Low')")
             .orderBy('due_date', 'asc')
             .limit(5);
@@ -205,6 +206,74 @@ export const getTasksByPriority = async (req, res, next) => {
     }
 };
 
+export const getServicesForTask = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { client_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Services List Request Received", {
+            username: user_name,
+            reqdetails: "task-getServicesForTask",
+        });
+
+        if (!client_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "task-getServicesForTask",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const getServiceResult = await knex('services')
+            .select('service_id', 'service_name', 'service_short_name')
+            .where('status', '0')
+            .whereNotExists(function () {
+                this.select('*')
+                    .from('tasks')
+                    .whereRaw('tasks.service = services.service_id')
+                    .where('tasks.client_id', client_id);
+            });
+
+        if (getServiceResult) {
+            logger.info("Services List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getServicesForTask",
+            });
+            return res.status(200).json({
+                message: "Services List retrieved successfully",
+                data: getServiceResult,
+                status: true,
+            });
+        } else {
+            logger.warn("No Services Details found", {
+                username: user_name,
+                reqdetails: "task-getServicesForTask",
+            });
+            return res.status(404).json({
+                message: "No Services Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Services List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getServicesForTask",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
@@ -228,6 +297,25 @@ export const addTask = async (req, res, next) => {
         }
 
         knex = await createKnexInstance(dbname);
+
+        const existingTask = await knex('tasks')
+            .where(function () {
+                this.where('client_id', client)
+                    .andWhere('service', service)
+            })
+            .andWhere('status', '0')
+            .first();
+
+        if (existingTask) {
+            logger.error("Duplicates in Task Entry", {
+                username: user_name,
+                reqdetails: "task-addTask",
+            });
+            return res.status(500).json({
+                message: "Duplicates in Task Entry",
+                status: false,
+            });
+        }
 
         const insertTaskResult = await knex('tasks').insert({
             client_id: client,

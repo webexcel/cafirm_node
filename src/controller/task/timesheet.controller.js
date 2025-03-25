@@ -754,7 +754,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let TSResult = null;
+        let TSResult = [];
 
         for (const ts of timesheets) {
             if (ts.ts_id && ts.time != null) {
