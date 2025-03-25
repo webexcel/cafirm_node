@@ -733,6 +733,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
     let knex = null;
     try {
         const { data } = req.body;
+        const { task_id, emp_id, timesheets } = data;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Weekly Time-Sheet Request Received", {
@@ -740,7 +741,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
             reqdetails: "task-updateWeeklyTimesheet",
         });
 
-        if (!data || data.length > 0) {
+        if (!task_id || !emp_id || !timesheets || timesheets.length == 0) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-updateWeeklyTimesheet",
@@ -753,21 +754,44 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let updateTSResult = null;
+        let TSResult = null;
 
-        for (const { id, time } of data) {
-            const [hours, minutes] = time.split(":").map(Number);
-            const tot_minutes = hours * 60 + minutes;
-
-            updateTSResult = await knex('time_sheets')
-                .update({
-                    total_minutes: tot_minutes,
-                    total_time: time
-                })
-                .where({ time_sheet_id: id });
+        for (const ts of timesheets) {
+            if (ts.ts_id) {
+                const [hours, minutes] = ts.time.split(":").map(Number);
+                const tot_minutes = hours * 60 + minutes;
+                TSResult = await knex('time_sheets')
+                    .where({ time_sheet_id: ts.ts_id })
+                    .update({
+                        total_time: ts.time,
+                        total_minutes: tot_minutes
+                    });
+            } else if (!ts.ts_id && ts.time !== "00:00") {
+                const [hours, minutes] = ts.time.split(":").map(Number);
+                const tot_minutes = hours * 60 + minutes;
+                TSResult = await knex('time_sheets')
+                    .where({ employee_id: emp_id, date: ts.ts_date })
+                    .first()
+                    .then(async (existingRecord) => {
+                        if (!existingRecord) {
+                            return await knex('time_sheets').insert({
+                                task_id,
+                                employee_id: emp_id,
+                                date: ts.ts_date,
+                                total_time: ts.time,
+                                total_minutes: tot_minutes
+                            });
+                        } else {
+                            return await knex('time_sheets').update({
+                                total_time: ts.time,
+                                total_minutes: tot_minutes
+                            }).where("time_sheet_id", existingRecord.time_sheet_id);
+                        }
+                    });
+            }
         }
 
-        if (updateTSResult) {
+        if (TSResult) {
             logger.info("Weekly Time-Sheet updated successfully", {
                 username: user_name,
                 reqdetails: "task-updateWeeklyTimesheet",
