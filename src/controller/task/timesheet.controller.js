@@ -637,44 +637,79 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
             reqdetails: "task-viewWeeklyTimesheet",
         });
 
+        if (!emp_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "task-viewWeeklyTimesheet",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
         knex = await createKnexInstance(dbname);
 
-        const getTSRes = await knex('time_sheets')
-            .select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"))
-            .where({ 'status': '0', 'employee_id': emp_id })
-            .whereRaw("WEEK(`date`, 0) = WEEK(CURDATE(), 0)");
+        const tasks = await knex('tasks')
+            .select('tasks.*')
+            .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
+            .where('employee_task_mapping.employee_id', emp_id);
 
-        for (const task of getTSRes) {
+        for (let task of tasks) {
+            const timesheets = await knex('time_sheets')
+                .select('*')
+                .where('task_id', task.task_id);
+            task["timesheet"] = timesheets.length > 0 ? timesheets : [];
+        }
+
+        for (const taskList of tasks) {
             const taskName = await knex("tasks")
                 .select("*")
-                .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
-            const employee = await knex("employees")
-                .select("name")
-                .where({ employee_id: task.employee_id }).first();
-            task["employee_name"] = employee?.name || null;
+                .where({ task_id: taskList.task_id }).first();
+            taskList["task_name"] = taskName?.task_name || null;
             const client = await knex("clients")
                 .select("client_name", "display_name")
                 .where({ client_id: taskName.client_id }).first();
-            task["client_id"] = taskName.client_id;
-            task["client_name"] = client?.client_name || null;
-            task["display_name"] = client?.display_name || null;
+            taskList["client_id"] = taskName.client_id;
+            taskList["client_name"] = client?.client_name || null;
+            taskList["display_name"] = client?.display_name || null;
             const service = await knex("services")
                 .select("service_name", "service_short_name")
                 .where({ service_id: taskName.service }).first();
-            task["service_id"] = taskName.service;
-            task["service_name"] = service?.service_name || null;
-            task["service_short_name"] = service?.service_short_name || null;
+            taskList["service_name"] = service?.service_name || null;
+            taskList["service_short_name"] = service?.service_short_name || null;
+            for (const task of taskList["timesheet"]) {
+                const taskName = await knex("tasks")
+                    .select("*")
+                    .where({ task_id: task.task_id }).first();
+                task["task_name"] = taskName?.task_name || null;
+                const employee = await knex("employees")
+                    .select("name")
+                    .where({ employee_id: task.employee_id }).first();
+                task["employee_name"] = employee?.name || null;
+                const client = await knex("clients")
+                    .select("client_name", "display_name")
+                    .where({ client_id: taskName.client_id }).first();
+                task["client_id"] = taskName.client_id;
+                task["client_name"] = client?.client_name || null;
+                task["display_name"] = client?.display_name || null;
+                const service = await knex("services")
+                    .select("service_name", "service_short_name")
+                    .where({ service_id: taskName.service }).first();
+                task["service_id"] = taskName.service;
+                task["service_name"] = service?.service_name || null;
+                task["service_short_name"] = service?.service_short_name || null;
+            }
         }
 
-        if (getTSRes) {
+        if (tasks) {
             logger.info("Time-Sheet Weekly List retrieved successfully", {
                 username: user_name,
                 reqdetails: "task-viewWeeklyTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet Weekly List retrieved successfully",
-                data: getTSRes,
+                data: tasks,
                 status: true,
             });
         } else {
@@ -730,7 +765,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
         for (const { id, time } of data) {
             const [hours, minutes] = time.split(":").map(Number);
             const tot_minutes = hours * 60 + minutes;
-        
+
             updateTSResult = await knex('time_sheets')
                 .update({
                     total_minutes: tot_minutes,
