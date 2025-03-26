@@ -84,6 +84,11 @@ export const getTimesheetLimited = async (req, res, next) => {
         const getTSRes = await knex('time_sheets').select('*', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date")).where('status', '0').orderBy('created_at', 'desc').limit(5);
 
         for (const task of getTSRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: task.task_id }).first();
+            task["task_name"] = taskName?.task_name || null;
+            task["task_description"] = taskName?.description || null;
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
