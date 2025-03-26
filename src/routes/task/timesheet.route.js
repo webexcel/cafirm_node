@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
 import { getTimesheet, getTimesheetLimited, getService, getemployee, getTaskList, addTimesheet, editTimesheet, 
-    deleteTimesheet, viewTimesheet } from "../../controller/task/timesheet.controller.js";
+    deleteTimesheet, viewTimesheet, viewWeeklyTimesheet, updateWeeklyTimesheet } from "../../controller/task/timesheet.controller.js";
 
 const tsRoutes = express.Router();
 
@@ -24,5 +24,9 @@ tsRoutes.post("/editTimesheet", editTimesheet);
 tsRoutes.post("/deleteTimesheet", deleteTimesheet);
 
 tsRoutes.post("/viewTimesheet", viewTimesheet);
+
+tsRoutes.post("/viewWeeklyTimesheet", viewWeeklyTimesheet);
+
+tsRoutes.post("/updateWeeklyTimesheet", updateWeeklyTimesheet);
 
 export default tsRoutes;
