@@ -712,3 +712,88 @@ export const getViewTasks = async (req, res, next) => {
         }
     }
 };
+
+export const getLatestTasks = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Task List Request Received", {
+            username: user_name,
+            reqdetails: "task-getLatestTasks",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        let getTaskRes = await knex('tasks')
+            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"))
+            .orderBy('created_at', 'desc')
+            .limit(5);
+
+        for (const task of getTaskRes) {
+            const mappedData = await knex("employee_task_mapping")
+                .select("employee_id")
+                .where({ task_id: task.task_id });
+
+            task["assigned_to"] = await Promise.all(
+                mappedData.map(async (data) => {
+                    const employee = await knex("employees")
+                        .select("name", "photo")
+                        .where({ employee_id: data.employee_id })
+                        .first();
+
+                    return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
+                })
+            );
+
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service }).first();
+            task["service_name"] = service?.service_name || null;
+
+            task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
+
+            const tsData = await knex("time_sheets").select("*").where({ "task_id": task.task_id });
+            let totalMinutes = 0;
+            tsData.map(data => {
+                totalMinutes += data.total_minutes;
+            });
+            task["total_minutes"] = totalMinutes;
+        }
+        if (getTaskRes) {
+            logger.info("Tasks List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getLatestTasks",
+            });
+            return res.status(200).json({
+                message: "Tasks List retrieved successfully",
+                data: getTaskRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Tasks Details found", {
+                username: user_name,
+                reqdetails: "task-getLatestTasks",
+            });
+            return res.status(404).json({
+                message: "No Tasks Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Tasks List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getLatestTasks",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
