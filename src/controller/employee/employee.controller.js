@@ -619,3 +619,51 @@ export const getEmployeesNotPassword = async (req, res, next) => {
     }
   }
 };
+
+export const getUserAccounts = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Employees List Request Received", {
+      username: user_name,
+      reqdetails: "employee-getEmployeesNotPassword",
+    });
+
+    knex = await createKnexInstance(dbname);
+
+    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0"}).whereNotNull('password_hash');
+
+    if (getEmpResult) {
+      logger.info("Employees List retrieved successfully", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesNotPassword",
+      });
+      return res.status(200).json({
+        message: "Employees List retrieved successfully",
+        data: getEmpResult,
+        status: true,
+      });
+    } else {
+      logger.warn("No Employees Details found", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesNotPassword",
+      });
+      return res.status(404).json({
+        message: "No Employees Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Employees List", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "employee-getEmployeesNotPassword",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
