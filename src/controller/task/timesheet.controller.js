@@ -9,7 +9,7 @@ export const getTimesheet = async (req, res, next) => {
 
         logger.info("Get Time-Sheet List Request Received", {
             username: user_name,
-            reqdetails: "task-getTimesheet",
+            reqdetails: "timesheet-getTimesheet",
         });
 
         knex = await createKnexInstance(dbname);
@@ -38,7 +38,7 @@ export const getTimesheet = async (req, res, next) => {
         if (getTSRes) {
             logger.info("Time-Sheet List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getTimesheet",
+                reqdetails: "timesheet-getTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet List retrieved successfully",
@@ -48,7 +48,7 @@ export const getTimesheet = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Details found", {
                 username: user_name,
-                reqdetails: "task-getTimesheet",
+                reqdetails: "timesheet-getTimesheet",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Details found",
@@ -59,7 +59,7 @@ export const getTimesheet = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getTimesheet",
+            reqdetails: "timesheet-getTimesheet",
         });
         next(err);
     } finally {
@@ -76,7 +76,7 @@ export const getTimesheetLimited = async (req, res, next) => {
 
         logger.info("Get Time-Sheet List Request Received", {
             username: user_name,
-            reqdetails: "task-getTimesheetLimited",
+            reqdetails: "timesheet-getTimesheetLimited",
         });
 
         knex = await createKnexInstance(dbname);
@@ -106,7 +106,7 @@ export const getTimesheetLimited = async (req, res, next) => {
         if (getTSRes) {
             logger.info("Time-Sheet List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getTimesheetLimited",
+                reqdetails: "timesheet-getTimesheetLimited",
             });
             return res.status(200).json({
                 message: "Time-Sheet List retrieved successfully",
@@ -116,7 +116,7 @@ export const getTimesheetLimited = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Details found", {
                 username: user_name,
-                reqdetails: "task-getTimesheetLimited",
+                reqdetails: "timesheet-getTimesheetLimited",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Details found",
@@ -127,7 +127,7 @@ export const getTimesheetLimited = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getTimesheetLimited",
+            reqdetails: "timesheet-getTimesheetLimited",
         });
         next(err);
     } finally {
@@ -145,7 +145,7 @@ export const getService = async (req, res, next) => {
 
         logger.info("Get Time-Sheet Service List Request Received", {
             username: user_name,
-            reqdetails: "task-getService",
+            reqdetails: "timesheet-getService",
         });
 
         knex = await createKnexInstance(dbname);
@@ -165,7 +165,7 @@ export const getService = async (req, res, next) => {
         if (getTSRes) {
             logger.info("Time-Sheet Service List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getService",
+                reqdetails: "timesheet-getService",
             });
             return res.status(200).json({
                 message: "Time-Sheet Service List retrieved successfully",
@@ -175,7 +175,7 @@ export const getService = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Service Details found", {
                 username: user_name,
-                reqdetails: "task-getService",
+                reqdetails: "timesheet-getService",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Service Details found",
@@ -186,7 +186,7 @@ export const getService = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet Service List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getService",
+            reqdetails: "timesheet-getService",
         });
         next(err);
     } finally {
@@ -204,7 +204,7 @@ export const getemployee = async (req, res, next) => {
 
         logger.info("Get Time-Sheet Employee List Request Received", {
             username: user_name,
-            reqdetails: "task-getemployee",
+            reqdetails: "timesheet-getemployee",
         });
 
         knex = await createKnexInstance(dbname);
@@ -235,7 +235,7 @@ export const getemployee = async (req, res, next) => {
         if (empListRes) {
             logger.info("Time-Sheet Employee List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getemployee",
+                reqdetails: "timesheet-getemployee",
             });
             return res.status(200).json({
                 message: "Time-Sheet Employee List retrieved successfully",
@@ -245,7 +245,7 @@ export const getemployee = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Employee Details found", {
                 username: user_name,
-                reqdetails: "task-getemployee",
+                reqdetails: "timesheet-getemployee",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Employee Details found",
@@ -256,7 +256,7 @@ export const getemployee = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet Employee List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getemployee",
+            reqdetails: "timesheet-getemployee",
         });
         next(err);
     } finally {
@@ -274,7 +274,7 @@ export const getTaskList = async (req, res, next) => {
 
         logger.info("Get Time-Sheet Employee List Request Received", {
             username: user_name,
-            reqdetails: "task-getemployee",
+            reqdetails: "timesheet-getemployee",
         });
 
         knex = await createKnexInstance(dbname);
@@ -312,7 +312,7 @@ export const getTaskList = async (req, res, next) => {
         if (filteredTasks) {
             logger.info("Time-Sheet Employee List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-getemployee",
+                reqdetails: "timesheet-getemployee",
             });
             return res.status(200).json({
                 message: "Time-Sheet Employee List retrieved successfully",
@@ -322,7 +322,7 @@ export const getTaskList = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Employee Details found", {
                 username: user_name,
-                reqdetails: "task-getemployee",
+                reqdetails: "timesheet-getemployee",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Employee Details found",
@@ -333,7 +333,7 @@ export const getTaskList = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet Employee List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-getemployee",
+            reqdetails: "timesheet-getemployee",
         });
         next(err);
     } finally {
@@ -351,13 +351,13 @@ export const addTimesheet = async (req, res, next) => {
 
         logger.info("Add Time-Sheet Request Received", {
             username: user_name,
-            reqdetails: "task-addTimesheet",
+            reqdetails: "timesheet-addTimesheet",
         });
 
         if (!emp_id || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "task-addTimesheet",
+                reqdetails: "timesheet-addTimesheet",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing",
@@ -383,7 +383,7 @@ export const addTimesheet = async (req, res, next) => {
         // if (existingTS) {
         //     logger.error("Duplicates in Time-Sheet Entry", {
         //         username: user_name,
-        //         reqdetails: "task-addTimesheet",
+        //         reqdetails: "timesheet-addTimesheet",
         //     });
         //     return res.status(500).json({
         //         message: "Duplicates in Time-Sheet Entry for employee/client/service/date.",
@@ -405,7 +405,7 @@ export const addTimesheet = async (req, res, next) => {
         if (insertTSResult) {
             logger.info("Time-Sheet inserted successfully", {
                 username: user_name,
-                reqdetails: "task-addTimesheet",
+                reqdetails: "timesheet-addTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet inserted successfully",
@@ -414,7 +414,7 @@ export const addTimesheet = async (req, res, next) => {
         } else {
             logger.error("Failed to insert Time-Sheet", {
                 username: user_name,
-                reqdetails: "task-addTimesheet",
+                reqdetails: "timesheet-addTimesheet",
             });
             return res.status(500).json({
                 message: "Failed to insert Time-Sheet",
@@ -439,13 +439,13 @@ export const editTimesheet = async (req, res, next) => {
 
         logger.info("Update Time-Sheet Request Received", {
             username: user_name,
-            reqdetails: "task-editTimesheet",
+            reqdetails: "timesheet-editTimesheet",
         });
 
         if (!ts_id || !date || !time) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "task-editTimesheet",
+                reqdetails: "timesheet-editTimesheet",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing",
@@ -468,7 +468,7 @@ export const editTimesheet = async (req, res, next) => {
         if (updateTSResult) {
             logger.info("Time-Sheet updated successfully", {
                 username: user_name,
-                reqdetails: "task-editTimesheet",
+                reqdetails: "timesheet-editTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet updated successfully",
@@ -477,7 +477,7 @@ export const editTimesheet = async (req, res, next) => {
         } else {
             logger.error("Failed to update Time-Sheet", {
                 username: user_name,
-                reqdetails: "task-editTimesheet",
+                reqdetails: "timesheet-editTimesheet",
             });
             return res.status(500).json({
                 message: "Failed to update Time-Sheet",
@@ -502,13 +502,13 @@ export const deleteTimesheet = async (req, res, next) => {
 
         logger.info("Delete Time-Sheet Status Request Received", {
             username: user_name,
-            reqdetails: "task-deleteTimesheet",
+            reqdetails: "timesheet-deleteTimesheet",
         });
 
         if (!id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "task-deleteTimesheet",
+                reqdetails: "timesheet-deleteTimesheet",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing",
@@ -523,7 +523,7 @@ export const deleteTimesheet = async (req, res, next) => {
         if (updateTicketResult) {
             logger.info("Time-Sheet Status deleted successfully", {
                 username: user_name,
-                reqdetails: "task-deleteTimesheet",
+                reqdetails: "timesheet-deleteTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet Status deleted successfully",
@@ -532,7 +532,7 @@ export const deleteTimesheet = async (req, res, next) => {
         } else {
             logger.error("Failed to delete Time-Sheet Status", {
                 username: user_name,
-                reqdetails: "task-deleteTimesheet",
+                reqdetails: "timesheet-deleteTimesheet",
             });
             return res.status(500).json({
                 message: "Failed to delete Time-Sheet Status",
@@ -557,7 +557,7 @@ export const viewTimesheet = async (req, res, next) => {
 
         logger.info("Get Time-Sheet List Request Received", {
             username: user_name,
-            reqdetails: "task-viewTimesheet",
+            reqdetails: "timesheet-viewTimesheet",
         });
 
         knex = await createKnexInstance(dbname);
@@ -600,7 +600,7 @@ export const viewTimesheet = async (req, res, next) => {
         if (getTSRes) {
             logger.info("Time-Sheet List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-viewTimesheet",
+                reqdetails: "timesheet-viewTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet List retrieved successfully",
@@ -610,7 +610,7 @@ export const viewTimesheet = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Details found", {
                 username: user_name,
-                reqdetails: "task-viewTimesheet",
+                reqdetails: "timesheet-viewTimesheet",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Details found",
@@ -621,7 +621,7 @@ export const viewTimesheet = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-viewTimesheet",
+            reqdetails: "timesheet-viewTimesheet",
         });
         next(err);
     } finally {
@@ -639,13 +639,13 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
 
         logger.info("Get Time-Sheet Weekly List Request Received", {
             username: user_name,
-            reqdetails: "task-viewWeeklyTimesheet",
+            reqdetails: "timesheet-viewWeeklyTimesheet",
         });
 
         if (!emp_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "task-viewWeeklyTimesheet",
+                reqdetails: "timesheet-viewWeeklyTimesheet",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing",
@@ -703,7 +703,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         if (tasks) {
             logger.info("Time-Sheet Weekly List retrieved successfully", {
                 username: user_name,
-                reqdetails: "task-viewWeeklyTimesheet",
+                reqdetails: "timesheet-viewWeeklyTimesheet",
             });
             return res.status(200).json({
                 message: "Time-Sheet Weekly List retrieved successfully",
@@ -713,7 +713,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         } else {
             logger.warn("No Time-Sheet Weekly Details found", {
                 username: user_name,
-                reqdetails: "task-viewWeeklyTimesheet",
+                reqdetails: "timesheet-viewWeeklyTimesheet",
             });
             return res.status(404).json({
                 message: "No Time-Sheet Weekly Details found",
@@ -724,7 +724,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         logger.error("Error fetching Time-Sheet Weekly List", {
             error: err.message,
             username: req.user?.user_name,
-            reqdetails: "task-viewWeeklyTimesheet",
+            reqdetails: "timesheet-viewWeeklyTimesheet",
         });
         next(err);
     } finally {
@@ -743,13 +743,13 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
 
         logger.info("Update Weekly Time-Sheet Request Received", {
             username: user_name,
-            reqdetails: "task-updateWeeklyTimesheet",
+            reqdetails: "timesheet-updateWeeklyTimesheet",
         });
 
         if (!task_id || !emp_id || !timesheets || timesheets.length == 0) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "task-updateWeeklyTimesheet",
+                reqdetails: "timesheet-updateWeeklyTimesheet",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing or empty",
@@ -799,7 +799,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
         if (TSResult) {
             logger.info("Weekly Time-Sheet updated successfully", {
                 username: user_name,
-                reqdetails: "task-updateWeeklyTimesheet",
+                reqdetails: "timesheet-updateWeeklyTimesheet",
             });
             return res.status(200).json({
                 message: "Weekly Time-Sheet updated successfully",
@@ -808,7 +808,7 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
         } else {
             logger.error("Failed to update Weekly Time-Sheet", {
                 username: user_name,
-                reqdetails: "task-updateWeeklyTimesheet",
+                reqdetails: "timesheet-updateWeeklyTimesheet",
             });
             return res.status(500).json({
                 message: "Failed to update Weekly Time-Sheet",
@@ -817,6 +817,63 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
         }
     } catch (error) {
         console.error("Error updating Weekly Time-Sheet:", error);
+        next(error);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const editTaskDescription = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { task_id, description } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Update Task Description Request Received", {
+            username: user_name,
+            reqdetails: "timesheet-editTaskDescription",
+        });
+
+        if (!task_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "timesheet-editTaskDescription",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const updateTaskResult = await knex('tasks').update({
+            description: description
+        }).where({ task_id: task_id });
+
+        if (updateTaskResult) {
+            logger.info("Task description updated successfully", {
+                username: user_name,
+                reqdetails: "timesheet-editTaskDescription",
+            });
+            return res.status(200).json({
+                message: "Task description updated successfully",
+                status: true,
+            });
+        } else {
+            logger.error("Failed to update Task description", {
+                username: user_name,
+                reqdetails: "timesheet-editTaskDescription",
+            });
+            return res.status(500).json({
+                message: "Failed to update Task description",
+                status: false,
+            });
+        }
+    } catch (error) {
+        console.error("Error updating Task description:", error);
         next(error);
     } finally {
         if (knex) {

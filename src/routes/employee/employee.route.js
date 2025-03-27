@@ -1,12 +1,15 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getEmployees, addEmployee, editEmployee, deleteEmployee, getEmployeeDetails, updatePassword, resetPassword, addUserAccount } from "../../controller/employee/employee.controller.js";
+import { getEmployees, getEmployeesByPermission, addEmployee, editEmployee, deleteEmployee, getEmployeeDetails, 
+    updatePassword, resetPassword, addUserAccount, getEmployeesNotPassword } from "../../controller/employee/employee.controller.js";
 
 const employeeRoutes = express.Router();
 
 employeeRoutes.use(authenticateJWT);
 
 employeeRoutes.get("/getEmployees", getEmployees);
+
+employeeRoutes.post("/getEmployeesByPermission", getEmployeesByPermission);
 
 employeeRoutes.post("/addEmployee", addEmployee);
 
@@ -21,5 +24,7 @@ employeeRoutes.post("/updatePassword", updatePassword);
 employeeRoutes.post("/resetPassword", resetPassword);
 
 employeeRoutes.post("/addUserAccount", addUserAccount);
+
+employeeRoutes.get("/getEmployeesNotPassword", getEmployeesNotPassword);
 
 export default employeeRoutes;

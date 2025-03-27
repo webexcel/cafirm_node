@@ -52,10 +52,75 @@ export const getEmployees = async (req, res, next) => {
   }
 };
 
+export const getEmployeesByPermission = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { emp_id, role } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Employees List Request Received", {
+      username: user_name,
+      reqdetails: "employee-getEmployeesByPermission",
+    });
+
+    if (!emp_id || !role) {
+      logger.error("Mandatory fields are missing", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesByPermission",
+      });
+      return res.status(400).json({
+        message: "Mandatory fields are missing",
+        status: false,
+      });
+    }
+
+    knex = await createKnexInstance(dbname);
+
+    let getEmpResult;
+    if (role == "S" || role == "A") {
+      getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
+    } else {
+      getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0").where("employee_id", emp_id);
+    }
+
+    if (getEmpResult) {
+      logger.info("Employees List retrieved successfully", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesByPermission",
+      });
+      return res.status(200).json({
+        message: "Employees List retrieved successfully",
+        data: getEmpResult,
+        status: true,
+      });
+    } else {
+      logger.warn("No Employees Details found", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesByPermission",
+      });
+      return res.status(404).json({
+        message: "No Employees Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Employees List", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "employee-getEmployeesByPermission",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
 export const addEmployee = async (req, res, next) => {
   let knex = null;
   try {
-    const { name, email, phone, role } = req.body;
+    const { name, email, phone } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Employee Request Received", {
@@ -63,7 +128,7 @@ export const addEmployee = async (req, res, next) => {
       reqdetails: "employee-addEmployee",
     });
 
-    if (!name || !email || !phone || !role) {
+    if (!name || !email || !phone) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "employee-addEmployee",
@@ -101,7 +166,7 @@ export const addEmployee = async (req, res, next) => {
         name: name,
         email: email,
         phone: phone,
-        role: role
+        // role: role
       });
 
     if (insertEmpResult) {
@@ -327,7 +392,7 @@ export const getEmployeeDetails = async (req, res, next) => {
 export const updatePassword = async (req, res, next) => {
   let knex = null;
   try {
-    const { id, password } = req.body;
+    const { id, password, role } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Employee Password Request Received", {
@@ -335,7 +400,7 @@ export const updatePassword = async (req, res, next) => {
       reqdetails: "employee-updatePassword",
     });
 
-    if (!id || !password) {
+    if (!id || !password || !role) {
       logger.error("Mandatory fields are missing for Update Employee Password", {
         username: user_name,
         reqdetails: "employee-updatePassword",
@@ -351,7 +416,7 @@ export const updatePassword = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const updateResult = await knex("employees").update({ "password_hash": hashedPassword }).where({ employee_id: id });
+    const updateResult = await knex("employees").update({ "password_hash": hashedPassword, role: role }).where({ employee_id: id });
 
     if (updateResult) {
       logger.info("Employee Password updated successfully", {
@@ -491,5 +556,53 @@ export const addUserAccount = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) knex.destroy();
+  }
+};
+
+export const getEmployeesNotPassword = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Employees List Request Received", {
+      username: user_name,
+      reqdetails: "employee-getEmployeesNotPassword",
+    });
+
+    knex = await createKnexInstance(dbname);
+
+    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0", "password_hash": null});
+
+    if (getEmpResult) {
+      logger.info("Employees List retrieved successfully", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesNotPassword",
+      });
+      return res.status(200).json({
+        message: "Employees List retrieved successfully",
+        data: getEmpResult,
+        status: true,
+      });
+    } else {
+      logger.warn("No Employees Details found", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesNotPassword",
+      });
+      return res.status(404).json({
+        message: "No Employees Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Employees List", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "employee-getEmployeesNotPassword",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
   }
 };
