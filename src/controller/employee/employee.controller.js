@@ -55,7 +55,7 @@ export const getEmployees = async (req, res, next) => {
 export const getEmployeesByPermission = async (req, res, next) => {
   let knex = null;
   try {
-    const { emp_id, role } = req.body;
+    const { emp_id } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Get Employees List Request Received", {
@@ -63,7 +63,7 @@ export const getEmployeesByPermission = async (req, res, next) => {
       reqdetails: "employee-getEmployeesByPermission",
     });
 
-    if (!emp_id || !role) {
+    if (!emp_id) {
       logger.error("Mandatory fields are missing", {
         username: user_name,
         reqdetails: "employee-getEmployeesByPermission",
@@ -76,11 +76,25 @@ export const getEmployeesByPermission = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
+    const employeeRes = await knex('employees').select('role').where("status", "0").where("employee_id", emp_id).first();
+
+    console.log(employeeRes);
     let getEmpResult;
-    if (role == "S" || role == "A") {
-      getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
+    if (employeeRes) {
+      if (employeeRes.role == "S" || employeeRes.role == "A") {
+        getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
+      } else {
+        getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0").where("employee_id", emp_id);
+      }
     } else {
-      getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0").where("employee_id", emp_id);
+      logger.warn("No Employees Details found", {
+        username: user_name,
+        reqdetails: "employee-getEmployeesByPermission",
+      });
+      return res.status(404).json({
+        message: "No Employees Details found",
+        status: false,
+      });
     }
 
     if (getEmpResult) {
