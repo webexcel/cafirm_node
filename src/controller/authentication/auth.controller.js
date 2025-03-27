@@ -26,7 +26,7 @@ export const login = async (req, res, next) => {
 
     const user = await knex("employees")
       .select("employee_id", "name", "email", "phone", "role", "password_hash")
-      .where({ email })
+      .where({ email, "status": "0" })
       .first();
 
     if (!user) {
