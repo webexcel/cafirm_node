@@ -186,7 +186,7 @@ export const editClient = async (req, res, next) => {
       const buffer = Buffer.from(base64Data, 'base64');
       fs.writeFileSync(filePath, buffer);
 
-      const fileUrl = `http://localhost:3006/profiles/${fileName}`;
+      const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
 
       updateResult = await knex("clients").update({ [key]: fileUrl }).where({ client_id: id });
     } else {
