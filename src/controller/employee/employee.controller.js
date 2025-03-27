@@ -78,7 +78,6 @@ export const getEmployeesByPermission = async (req, res, next) => {
 
     const employeeRes = await knex('employees').select('role').where("status", "0").where("employee_id", emp_id).first();
 
-    console.log(employeeRes);
     let getEmpResult;
     if (employeeRes) {
       if (employeeRes.role == "S" || employeeRes.role == "A") {
