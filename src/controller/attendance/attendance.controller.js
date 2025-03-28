@@ -227,8 +227,16 @@ export const getAttendanceByDate = async (req, res, next) => {
       .orderBy("login_date", "desc");
 
     if (emp_id) {
-      query.where("employee_id", emp_id)
-        .whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]);
+      const employee = await knex("employees").select("*").where("employee_id", emp_id).first();
+      if (employee.role == "E") {
+        query.where("employee_id", emp_id);
+      }
+      
+      if (start_date != "" && end_date != "") {
+        query.whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]);
+      } else {
+        query.whereRaw("DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+      }
     } else {
       query.whereRaw("DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
     }
