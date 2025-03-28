@@ -67,20 +67,19 @@ export const assignPermission = async (req, res, next) => {
   try {
     const { employee_id, permission_id } = req.body;
     const { dbname, name } = req.user;
-    // Validate required fields
+
     if (!employee_id || !permission_id) {
       return res.status(400).json({
-        message: "employee_id, permission_id are required fields.",
+        message: "employee_id and permission_id are required fields.",
         status: false,
       });
     }
 
-    // Create a Knex instance for database interaction
     knex = await createKnexInstance(dbname);
 
     // Check if the user exists
     const userExists = await knex("employees")
-      .where({ employee_id: employee_id })
+      .where({ employee_id })
       .first();
     if (!userExists) {
       return res.status(404).json({
@@ -100,24 +99,41 @@ export const assignPermission = async (req, res, next) => {
       });
     }
 
-    // Insert the user permission assignment
-    await knex("tbl_user_permissions").insert({
-      user_id: employee_id,
-      permission_id,
-      granted_by: employee_id,
-    });
+    // Check if the user already has a permission assigned
+    const existingPermission = await knex("tbl_user_permissions")
+      .where({ user_id: employee_id })
+      .first();
 
-    // Log and respond
-    logger.info(
-      `Permission ${permission_id} assigned to User ${name}`
-    );
-    res.status(201).json({
+    if (existingPermission) {
+      // Update the existing record
+      await knex("tbl_user_permissions")
+        .where({ user_id: employee_id })
+        .update({
+          permission_id,
+          granted_by: employee_id,
+          granted_at: knex.fn.now(),
+        });
+    } else {
+      // Insert a new record
+      await knex("tbl_user_permissions").insert({
+        user_id: employee_id,
+        permission_id,
+        granted_by: employee_id,
+      });
+    }
+
+    logger.info(`Permission ${permission_id} assigned to User ${name}`);
+    res.status(200).json({
       message: "Permission assigned successfully.",
       status: true,
     });
   } catch (error) {
-    logger.error("Error assigning permission:", error);
-    next(error);
+    logger.error("Error assigning permission:", error.stack || error.message);
+    res.status(500).json({
+      message: "Error assigning permission.",
+      error: error.message,
+      status: false,
+    });
   } finally {
     if (knex) {
       knex.destroy();
@@ -143,35 +159,29 @@ export const getUserPermissions = async (req, res, next) => {
 
     // Fetch user permissions with parent menu
     const userPermissions = await knex("tbl_user_permissions as up")
-      .join("tbl_permissions as p", "up.permission_id", "p.permission_id")
-      .join(
-        "tbl_permission_operations as po",
-        "p.permission_id",
-        "po.permission_id"
-      )
-      .join(
-        "tbl_menu_operations as mo",
-        "po.menu_operation_id",
-        "mo.menu_operation_id"
-      )
-      .join("tbl_menus as m", "mo.menu_id", "m.menu_id")
-      .leftJoin("tbl_menus as parent_m", "m.parent_id", "parent_m.menu_id")
-      .join("tbl_operations as o", "mo.operation_id", "o.operation_id")
-      .select(
-        "parent_m.menu_id as parent_menu_id",
-        "parent_m.menu_name as parent_menu",
-        "parent_m.parent_id as parent_id",
-        "parent_m.sequence_number as parent_sequence",
-        "m.menu_id as submenu_id",
-        "m.menu_name as submenu",
-        "m.sequence_number as submenu_sequence",
-        "o.operation_name",
-        "up.granted_at"
-      )
-      .orderBy([
-        { column: "parent_sequence", order: "asc" },
-        { column: "submenu_sequence", order: "asc" },
-      ]);
+  .join("tbl_permissions as p", "up.permission_id", "p.permission_id")
+  .join("tbl_permission_operations as po", "p.permission_id", "po.permission_id")
+  .join("tbl_menu_operations as mo", "po.menu_operation_id", "mo.menu_operation_id")
+  .join("tbl_menus as m", "mo.menu_id", "m.menu_id")
+  .leftJoin("tbl_menus as parent_m", "m.parent_id", "parent_m.menu_id")
+  .join("tbl_operations as o", "mo.operation_id", "o.operation_id")
+  .select(
+    "parent_m.menu_id as parent_menu_id",
+    "parent_m.menu_name as parent_menu",
+    "parent_m.parent_id as parent_id",
+    "parent_m.sequence_number as parent_sequence",
+    "m.menu_id as submenu_id",
+    "m.menu_name as submenu",
+    "m.sequence_number as submenu_sequence",
+    "o.operation_name",
+    "up.granted_at"
+  )
+  .where("up.user_id", user_id)
+  .orderBy([
+    { column: "parent_sequence", order: "asc" },
+    { column: "submenu_sequence", order: "asc" },
+  ]);
+
 
     if (!userPermissions || userPermissions.length === 0) {
       return res.status(404).json({
