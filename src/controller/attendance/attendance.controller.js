@@ -203,7 +203,7 @@ export const logoutAttendance = async (req, res, next) => {
 export const getAttendanceByDate = async (req, res, next) => {
   let knex = null;
   try {
-    const { emp_id, start_date, end_date } = req.body;
+    const { emp_id, user_id, start_date, end_date } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Get Attendance List Request Received", {
@@ -226,12 +226,15 @@ export const getAttendanceByDate = async (req, res, next) => {
       .groupBy('employee_id', 'login_date')
       .orderBy("login_date", "desc");
 
+    const employee = await knex("employees").select("*").where("employee_id", user_id).first();
+
+    if (emp_id == "" && employee.role == "E") {
+      query.where("employee_id", user_id);
+    }
+
     if (emp_id) {
-      const employee = await knex("employees").select("*").where("employee_id", emp_id).first();
-      if (employee.role == "E") {
-        query.where("employee_id", emp_id);
-      }
-      
+      query.where("employee_id", emp_id);
+
       if (start_date != "" && end_date != "") {
         query.whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]);
       } else {
