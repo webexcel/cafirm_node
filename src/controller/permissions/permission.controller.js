@@ -394,7 +394,7 @@ export const getPermissionsList = async (req, res, next) => {
       "permission_name",
       "description",
       "created_at"
-    );
+    ).where("status", "1");
 
     // Fetch menu-operation mappings for each permission set
     const permissionOperations = await knex("tbl_permission_operations as po")

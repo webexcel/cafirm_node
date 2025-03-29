@@ -289,3 +289,9 @@ DROP INDEX `employee_id` ;
 
 ALTER TABLE `ca_firm`.`time_sheets`
 ADD COLUMN `week_id` INT AFTER `task_id`;
+
+ALTER TABLE `ca_firm`.`tbl_permissions` 
+ADD COLUMN `status` INT NULL DEFAULT 1 AFTER `created_at`;
+
+ALTER TABLE `ca_firm`.`employees` 
+CHANGE COLUMN `role` `role` INT NULL DEFAULT 3 ;

@@ -80,7 +80,7 @@ export const getEmployeesByPermission = async (req, res, next) => {
 
     let getEmpResult;
     if (employeeRes) {
-      if (employeeRes.role == "S" || employeeRes.role == "A") {
+      if (employeeRes.role == 1 || employeeRes.role == 2) {
         getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
       } else {
         getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0").where("employee_id", emp_id);

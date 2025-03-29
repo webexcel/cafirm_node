@@ -228,7 +228,7 @@ export const getAttendanceByDate = async (req, res, next) => {
 
     const employee = await knex("employees").select("*").where("employee_id", user_id).first();
 
-    if (emp_id == "" && employee.role == "E") {
+    if (emp_id == "" && employee.role == 3) {
       query.where("employee_id", user_id);
     }
 
