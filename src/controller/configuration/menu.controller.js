@@ -50,6 +50,55 @@ export const getMenuList = async (req, res, next) => {
     }
 };
 
+export const getOperationList = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Operations List Request Received", {
+            username: user_name,
+            reqdetails: "menu-getOperationList",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getResult = await knex('tbl_operations')
+            .select('*');
+
+        if (getResult) {
+            logger.info("Operations List retrieved successfully", {
+                username: user_name,
+                reqdetails: "menu-getOperationList",
+            });
+            return res.status(200).json({
+                message: "Operations List retrieved successfully",
+                data: getResult,
+                status: true,
+            });
+        } else {
+            logger.warn("No Operations Details found", {
+                username: user_name,
+                reqdetails: "menu-getOperationList",
+            });
+            return res.status(404).json({
+                message: "No Operations Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Operations List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "menu-getOperationList",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const addMenu = async (req, res, next) => {
     let knex = null;
     try {
