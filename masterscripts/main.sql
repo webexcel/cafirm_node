@@ -295,3 +295,5 @@ ADD COLUMN `status` INT NULL DEFAULT 1 AFTER `created_at`;
 
 ALTER TABLE `ca_firm`.`employees` 
 CHANGE COLUMN `role` `role` INT NULL DEFAULT 3 ;
+
+ALTER TABLE tbl_menus ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
