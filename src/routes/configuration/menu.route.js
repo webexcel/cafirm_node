@@ -8,10 +8,10 @@ menuRoutes.use(authenticateJWT);
 
 menuRoutes.get("/getMenuList", getMenuList);
 
-menuRoutes.get("/getOperationList", getOperationList);
-
 menuRoutes.post("/addMenu", addMenu);
 
 menuRoutes.post("/addMenuOperations", addMenuOperations);
+
+menuRoutes.post("/getOperationList", getOperationList);
 
 export default menuRoutes;

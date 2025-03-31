@@ -53,6 +53,7 @@ export const getMenuList = async (req, res, next) => {
 export const getOperationList = async (req, res, next) => {
     let knex = null;
     try {
+        const { menu_id } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Get Operations List Request Received", {
@@ -63,7 +64,12 @@ export const getOperationList = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         const getResult = await knex('tbl_operations')
-            .select('*');
+        .leftJoin('tbl_menu_operations', function () {
+            this.on('tbl_operations.operation_id', '=', 'tbl_menu_operations.operation_id')
+            .andOn('tbl_menu_operations.menu_id', '=', knex.raw('?', [menu_id]));
+        })
+        .whereNull('tbl_menu_operations.operation_id')
+        .select('tbl_operations.*');
 
         if (getResult) {
             logger.info("Operations List retrieved successfully", {
