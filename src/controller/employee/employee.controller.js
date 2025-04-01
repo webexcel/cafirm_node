@@ -405,7 +405,7 @@ export const getEmployeeDetails = async (req, res, next) => {
 export const updatePassword = async (req, res, next) => {
   let knex = null;
   try {
-    const { id, password, role } = req.body;
+    const { id, password, role, user_id } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Employee Password Request Received", {
@@ -413,7 +413,7 @@ export const updatePassword = async (req, res, next) => {
       reqdetails: "employee-updatePassword",
     });
 
-    if (!id || !password || !role) {
+    if (!id || !password || !role || !user_id) {
       logger.error("Mandatory fields are missing for Update Employee Password", {
         username: user_name,
         reqdetails: "employee-updatePassword",
@@ -430,6 +430,12 @@ export const updatePassword = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const updateResult = await knex("employees").update({ "password_hash": hashedPassword, role: role }).where({ employee_id: id });
+
+    await knex("tbl_user_permissions").insert({
+      user_id: id,
+      permission_id: role,
+      granted_by: user_id
+    });
 
     if (updateResult) {
       logger.info("Employee Password updated successfully", {
