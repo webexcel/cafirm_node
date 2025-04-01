@@ -1,6 +1,5 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
-import moment from 'moment';
 
 export const getLeaveList = async (req, res, next) => {
     let knex = null;
@@ -94,10 +93,10 @@ export const addLeave = async (req, res, next) => {
             });
         }
 
-        const startDate = moment("2025-04-06", "YYYY-MM-DD");
-        const endDate = moment("2025-04-10", "YYYY-MM-DD");
+        const startDate = new Date(start_date + "T00:00:00");
+        const endDate = new Date(end_date + "T23:59:59");
 
-        const leaveDays = endDate.diff(startDate, 'days') + 1;
+        const leaveDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
         const insertResult = await knex('leave_requests').insert({
             employee_id: emp_id,
@@ -161,13 +160,10 @@ export const updateLeave = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const startDate = new Date("2025-04-06");
-        startDate.setHours(0, 0, 0, 0);
+        const startDate = new Date(start_date + "T00:00:00");
+        const endDate = new Date(end_date + "T23:59:59");
 
-        const endDate = new Date("2025-04-10");
-        endDate.setHours(0, 0, 0, 0);
-
-        const leaveDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
+        const leaveDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
         const updateResult = await knex("leave_requests").update({
             leave_type: leave_type,
