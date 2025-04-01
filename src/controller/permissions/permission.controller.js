@@ -35,7 +35,7 @@ export const addPermission = async (req, res, next) => {
     const [permission_id] = await knex("tbl_permissions").insert({
       permission_name,
       description,
-      created_by:UserId
+      created_by: UserId
     });
 
     // Insert operations mapped to this permission set
@@ -159,28 +159,28 @@ export const getUserPermissions = async (req, res, next) => {
 
     // Fetch user permissions with parent menu
     const userPermissions = await knex("tbl_user_permissions as up")
-  .join("tbl_permissions as p", "up.permission_id", "p.permission_id")
-  .join("tbl_permission_operations as po", "p.permission_id", "po.permission_id")
-  .join("tbl_menu_operations as mo", "po.menu_operation_id", "mo.menu_operation_id")
-  .join("tbl_menus as m", "mo.menu_id", "m.menu_id")
-  .leftJoin("tbl_menus as parent_m", "m.parent_id", "parent_m.menu_id")
-  .join("tbl_operations as o", "mo.operation_id", "o.operation_id")
-  .select(
-    "parent_m.menu_id as parent_menu_id",
-    "parent_m.menu_name as parent_menu",
-    "parent_m.parent_id as parent_id",
-    "parent_m.sequence_number as parent_sequence",
-    "m.menu_id as submenu_id",
-    "m.menu_name as submenu",
-    "m.sequence_number as submenu_sequence",
-    "o.operation_name",
-    "up.granted_at"
-  )
-  .where("up.user_id", user_id)
-  .orderBy([
-    { column: "parent_sequence", order: "asc" },
-    { column: "submenu_sequence", order: "asc" },
-  ]);
+      .join("tbl_permissions as p", "up.permission_id", "p.permission_id")
+      .join("tbl_permission_operations as po", "p.permission_id", "po.permission_id")
+      .join("tbl_menu_operations as mo", "po.menu_operation_id", "mo.menu_operation_id")
+      .join("tbl_menus as m", "mo.menu_id", "m.menu_id")
+      .leftJoin("tbl_menus as parent_m", "m.parent_id", "parent_m.menu_id")
+      .join("tbl_operations as o", "mo.operation_id", "o.operation_id")
+      .select(
+        "parent_m.menu_id as parent_menu_id",
+        "parent_m.menu_name as parent_menu",
+        "parent_m.parent_id as parent_id",
+        "parent_m.sequence_number as parent_sequence",
+        "m.menu_id as submenu_id",
+        "m.menu_name as submenu",
+        "m.sequence_number as submenu_sequence",
+        "o.operation_name",
+        "up.granted_at"
+      )
+      .where("up.user_id", user_id)
+      .orderBy([
+        { column: "parent_sequence", order: "asc" },
+        { column: "submenu_sequence", order: "asc" },
+      ]);
 
 
     if (!userPermissions || userPermissions.length === 0) {
@@ -235,9 +235,9 @@ export const getUserPermissions = async (req, res, next) => {
         ...value,
         submenus: value.submenus
           ? Object.values(value.submenus).sort(
-              (a, b) =>
-                (a.sequence_number ?? 9999) - (b.sequence_number ?? 9999)
-            )
+            (a, b) =>
+              (a.sequence_number ?? 9999) - (b.sequence_number ?? 9999)
+          )
           : null,
       }))
       .sort(
@@ -260,70 +260,70 @@ export const getUserPermissions = async (req, res, next) => {
 };
 
 export const updatePermission = async (req, res, next) => {
-    let knex = null;
-    try {
-      const { permission_id } = req.params;
-      const { permission_name, description, operations } = req.body;
-      const { dbname } = req.user;
-  
-      // Validate required fields
-      if (!permission_id || !permission_name || !operations || operations.length === 0) {
-        return res.status(400).json({
-          message: 'permission_id, permission_name, and operations are required fields.',
-          status: false,
-        });
-      }
-  
-      // Create a Knex instance for database interaction
-      knex = await createKnexInstance(dbname);
-  
-      // Check if the permission exists
-      const existingPermission = await knex('tbl_permissions')
-        .where({ permission_id })
-        .first();
-  
-      if (!existingPermission) {
-        return res.status(404).json({
-          message: 'Permission not found.',
-          status: false,
-        });
-      }
-  
-      // Update the permission details
-      await knex('tbl_permissions')
-        .where({ permission_id })
-        .update({
-          permission_name,
-          description,
-        });
-  
-      // Remove existing operations for the permission
-      await knex('tbl_permission_operations')
-        .where({ permission_id })
-        .del();
-  
-      // Insert updated operations
-      const operationsData = operations.map((operation_id) => ({
-        permission_id,
-        menu_operation_id: operation_id,
-      }));
-  
-      await knex('tbl_permission_operations').insert(operationsData);
-  
-      // Log and respond
-      logger.info(`Permission ${permission_id} updated successfully.`);
-      res.status(200).json({
-        message: 'Permission updated successfully.',
-        status: true,
+  let knex = null;
+  try {
+    const { permission_id } = req.params;
+    const { permission_name, description, operations } = req.body;
+    const { dbname } = req.user;
+
+    // Validate required fields
+    if (!permission_id || !permission_name || !operations || operations.length === 0) {
+      return res.status(400).json({
+        message: 'permission_id, permission_name, and operations are required fields.',
+        status: false,
       });
-    } catch (error) {
-      logger.error('Error updating permission:', error);
-      next(error);
-    } finally {
-      if (knex) {
-        knex.destroy();
-      }
     }
+
+    // Create a Knex instance for database interaction
+    knex = await createKnexInstance(dbname);
+
+    // Check if the permission exists
+    const existingPermission = await knex('tbl_permissions')
+      .where({ permission_id })
+      .first();
+
+    if (!existingPermission) {
+      return res.status(404).json({
+        message: 'Permission not found.',
+        status: false,
+      });
+    }
+
+    // Update the permission details
+    await knex('tbl_permissions')
+      .where({ permission_id })
+      .update({
+        permission_name,
+        description,
+      });
+
+    // Remove existing operations for the permission
+    await knex('tbl_permission_operations')
+      .where({ permission_id })
+      .del();
+
+    // Insert updated operations
+    const operationsData = operations.map((operation_id) => ({
+      permission_id,
+      menu_operation_id: operation_id,
+    }));
+
+    await knex('tbl_permission_operations').insert(operationsData);
+
+    // Log and respond
+    logger.info(`Permission ${permission_id} updated successfully.`);
+    res.status(200).json({
+      message: 'Permission updated successfully.',
+      status: true,
+    });
+  } catch (error) {
+    logger.error('Error updating permission:', error);
+    next(error);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
 };
 
 export const getMenuOperations = async (req, res, next) => {
@@ -394,7 +394,7 @@ export const getPermissionsList = async (req, res, next) => {
       "permission_name",
       "description",
       "created_at"
-    );
+    ).where("status", "1");
 
     // Fetch menu-operation mappings for each permission set
     const permissionOperations = await knex("tbl_permission_operations as po")
@@ -479,7 +479,7 @@ export const getAllUserList = async (req, res, next) => {
       "name",
       "email"
     );
-    
+
     // Respond with the structured data
     res.status(200).json({
       message: "Users list retrieved successfully.",

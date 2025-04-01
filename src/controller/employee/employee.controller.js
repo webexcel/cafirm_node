@@ -16,7 +16,19 @@ export const getEmployees = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
+    const getEmpResult = await knex('employees')
+      .join('tbl_permissions', 'employees.role', 'tbl_permissions.permission_id')
+      .select(
+        'employees.employee_id',
+        'employees.name',
+        'employees.email',
+        'employees.phone',
+        'employees.role',
+        'tbl_permissions.permission_name',
+        'employees.photo'
+      )
+      .where('employees.status', '0')
+      .whereNot('employees.role', 1);
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {
@@ -80,7 +92,7 @@ export const getEmployeesByPermission = async (req, res, next) => {
 
     let getEmpResult;
     if (employeeRes) {
-      if (employeeRes.role == "S" || employeeRes.role == "A") {
+      if (employeeRes.role == 1 || employeeRes.role == 2) {
         getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0");
       } else {
         getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where("status", "0").where("employee_id", emp_id);
@@ -405,7 +417,7 @@ export const getEmployeeDetails = async (req, res, next) => {
 export const updatePassword = async (req, res, next) => {
   let knex = null;
   try {
-    const { id, password, role } = req.body;
+    const { id, password, role, user_id } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Employee Password Request Received", {
@@ -413,7 +425,7 @@ export const updatePassword = async (req, res, next) => {
       reqdetails: "employee-updatePassword",
     });
 
-    if (!id || !password || !role) {
+    if (!id || !password || !role || !user_id) {
       logger.error("Mandatory fields are missing for Update Employee Password", {
         username: user_name,
         reqdetails: "employee-updatePassword",
@@ -430,6 +442,12 @@ export const updatePassword = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const updateResult = await knex("employees").update({ "password_hash": hashedPassword, role: role }).where({ employee_id: id });
+
+    await knex("tbl_user_permissions").insert({
+      user_id: id,
+      permission_id: role,
+      granted_by: user_id
+    });
 
     if (updateResult) {
       logger.info("Employee Password updated successfully", {
@@ -584,7 +602,7 @@ export const getEmployeesNotPassword = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0", "password_hash": null});
+    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({ "status": "0", "password_hash": null });
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {
@@ -632,7 +650,20 @@ export const getUserAccounts = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0"}).whereNotNull('password_hash');
+    const getEmpResult = await knex('employees')
+      .join('tbl_permissions', 'employees.role', 'tbl_permissions.permission_id')
+      .select(
+        'employees.employee_id',
+        'employees.name',
+        'employees.email',
+        'employees.phone',
+        'employees.role',
+        'tbl_permissions.permission_name',
+        'employees.photo'
+      )
+      .where('employees.status', '0')
+      .whereNot('employees.role', 1)
+      .whereNotNull('employees.password_hash');
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {

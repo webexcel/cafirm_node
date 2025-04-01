@@ -12,6 +12,8 @@ import PermissionRoutes from "./permission/permission.routes.js";
 import attendanceRoutes from "./attendance/attendance.route.js";
 import dashboardRoutes from "./dashboard/dashboard.route.js";
 import calendarRoutes from "./calendar/calendar.route.js";
+import menuRoutes from "./configuration/menu.route.js";
+import leaveRequestRoutes from "./leaveRequest/leaveRequest.route.js";
 
 const mainRoutes = express.Router();
 
@@ -40,5 +42,9 @@ mainRoutes.use("/attendance", attendanceRoutes);
 mainRoutes.use("/dashboard", dashboardRoutes);
 
 mainRoutes.use("/calendar", calendarRoutes);
+
+mainRoutes.use("/menu", menuRoutes);
+
+mainRoutes.use("/leaverequest", leaveRequestRoutes);
 
 export default mainRoutes;
