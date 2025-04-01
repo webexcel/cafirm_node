@@ -584,7 +584,7 @@ export const getEmployeesNotPassword = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0", "password_hash": null});
+    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({ "status": "0", "password_hash": null });
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {
@@ -632,7 +632,20 @@ export const getUserAccounts = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
-    const getEmpResult = await knex('employees').select('employee_id', 'name', 'email', 'phone', 'role', 'photo').where({"status": "0"}).whereNotNull('password_hash');
+    const getEmpResult = await knex('employees')
+      .join('tbl_permissions', 'employees.role', 'tbl_permissions.permission_id')
+      .select(
+        'employees.employee_id',
+        'employees.name',
+        'employees.email',
+        'employees.phone',
+        'employees.role',
+        'tbl_permissions.permission_name',
+        'employees.photo'
+      )
+      .where('employees.status', '0')
+      .whereNot('employees.role', 1)
+      .whereNotNull('employees.password_hash');
 
     if (getEmpResult) {
       logger.info("Employees List retrieved successfully", {

@@ -297,3 +297,17 @@ ALTER TABLE `ca_firm`.`employees`
 CHANGE COLUMN `role` `role` INT NULL DEFAULT 3 ;
 
 ALTER TABLE tbl_menus ADD COLUMN status ENUM('0', '1') NOT NULL DEFAULT '0';
+
+CREATE TABLE tbl_leave_requests (
+    leave_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    leave_type ENUM('Casual', 'Sick', 'Annual', 'Unpaid') NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    total_days INT NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    status ENUM('Pending', 'Approved', 'Rejected', 'Deleted') DEFAULT 'Pending',
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_by INT NULL,
+    approved_at TIMESTAMP NULL DEFAULT NULL
+);
