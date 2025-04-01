@@ -20,6 +20,6 @@ menuRoutes.post("/updateMenu", updateMenu);
 
 menuRoutes.post("/deleteMenu", deleteMenu);
 
-menuRoutes.get("/getParentMenuList", getParentMenuList)
+menuRoutes.get("/getParentMenuList", getParentMenuList);
 
 export default menuRoutes;
