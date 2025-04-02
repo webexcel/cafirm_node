@@ -311,3 +311,11 @@ CREATE TABLE tbl_leave_requests (
     approved_by INT NULL,
     approved_at TIMESTAMP NULL DEFAULT NULL
 );
+
+ALTER TABLE `ca_firm`.`employees` 
+ADD COLUMN `permission_id` INT NULL DEFAULT NULL AFTER `updated_at`,
+ADD COLUMN `granted_by` INT NULL DEFAULT NULL AFTER `permission_id`,
+ADD COLUMN `granted_at` TIMESTAMP NULL DEFAULT NULL AFTER `granted_by`;
+
+ALTER TABLE `ca_firm`.`tbl_permissions` 
+AUTO_INCREMENT = 3 ;
