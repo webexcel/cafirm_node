@@ -370,26 +370,25 @@ export const addTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        // const existingTS = await knex('time_sheets')
-        //     .where(function () {
-        //         this.where('employee_id', emp_id)
-        //             // .andWhere('client_id', clientId)
-        //             // .andWhere('service_id', serviceId)
-        //             .andWhere('date', date);
-        //     })
-        //     .where('status', '0')
-        //     .first();
+        const existingTS = await knex('time_sheets')
+            .where(function () {
+                this.where('employee_id', emp_id)
+                    .andWhere('task_id', task_id)
+                    .andWhere('date', date);
+            })
+            .where('status', '0')
+            .first();
 
-        // if (existingTS) {
-        //     logger.error("Duplicates in Time-Sheet Entry", {
-        //         username: user_name,
-        //         reqdetails: "timesheet-addTimesheet",
-        //     });
-        //     return res.status(500).json({
-        //         message: "Duplicates in Time-Sheet Entry for employee/client/service/date.",
-        //         status: false,
-        //     });
-        // }
+        if (existingTS) {
+            logger.error("Duplicates in Time-Sheet Entry", {
+                username: user_name,
+                reqdetails: "timesheet-addTimesheet",
+            });
+            return res.status(500).json({
+                message: "Duplicates in Time-Sheet Entry for this task.",
+                status: false,
+            });
+        }
 
         const insertTSResult = await knex('time_sheets').insert({
             employee_id: emp_id,
