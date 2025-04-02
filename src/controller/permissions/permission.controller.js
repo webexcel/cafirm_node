@@ -100,25 +100,27 @@ export const assignPermission = async (req, res, next) => {
     }
 
     // Check if the user already has a permission assigned
-    const existingPermission = await knex("tbl_user_permissions")
-      .where({ user_id: employee_id })
+    const existingPermission = await knex("employees")
+      .where({ employee_id: employee_id })
       .first();
 
     if (existingPermission) {
       // Update the existing record
-      await knex("tbl_user_permissions")
-        .where({ user_id: employee_id })
+      await knex("employees")
+        .where({ employee_id: employee_id })
         .update({
           permission_id,
           granted_by: employee_id,
           granted_at: knex.fn.now(),
         });
     } else {
-      // Insert a new record
-      await knex("tbl_user_permissions").insert({
-        user_id: employee_id,
-        permission_id,
-        granted_by: employee_id,
+      logger.error("Employee Not Found", {
+        username: user_name,
+        reqdetails: "permission-assignPassword",
+      });
+      return res.status(404).json({
+        message: "Employee Not Found",
+        status: false,
       });
     }
 
@@ -158,7 +160,7 @@ export const getUserPermissions = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     // Fetch user permissions with parent menu
-    const userPermissions = await knex("tbl_user_permissions as up")
+    const userPermissions = await knex("employees as up")
       .join("tbl_permissions as p", "up.permission_id", "p.permission_id")
       .join("tbl_permission_operations as po", "p.permission_id", "po.permission_id")
       .join("tbl_menu_operations as mo", "po.menu_operation_id", "mo.menu_operation_id")
@@ -176,7 +178,7 @@ export const getUserPermissions = async (req, res, next) => {
         "o.operation_name",
         "up.granted_at"
       )
-      .where("up.user_id", user_id)
+      .where("up.employee_id", user_id)
       .orderBy([
         { column: "parent_sequence", order: "asc" },
         { column: "submenu_sequence", order: "asc" },
