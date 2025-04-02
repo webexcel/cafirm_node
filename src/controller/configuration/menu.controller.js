@@ -13,14 +13,17 @@ export const getMenuList = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getResult = await knex('tbl_menus').where('status', '0')
-            .whereNotNull('parent_id')
-            .orWhere('parent_id', null)
+        const getResult = await knex('tbl_menus as m')
+            .leftJoin('tbl_menus as parent', 'm.parent_id', 'parent.menu_id')
+            .where('m.status', '0')
+            .whereNotNull('m.parent_id')
+            .orWhere('m.parent_id', null)
             .whereNotExists(function () {
                 this.select('*')
                     .from('tbl_menus as sub')
-                    .whereRaw('sub.parent_id = tbl_menus.menu_id');
-            });
+                    .whereRaw('sub.parent_id = m.menu_id');
+            })
+            .select('m.*', 'parent.menu_name as parent_name');
 
         if (getResult) {
             logger.info("Menus List retrieved successfully", {
