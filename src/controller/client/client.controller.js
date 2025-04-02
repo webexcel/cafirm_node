@@ -173,7 +173,7 @@ export const editClient = async (req, res, next) => {
     let updateResult;
 
     if (key == "photo") {
-      const uploadDir = "C:\\raja\\profiles";
+      const uploadDir = process.env.Folder_Path;
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }

@@ -9,7 +9,7 @@ import path from 'path';
 
 const PORT = process.env.PORT || 3006;
 
-const profilesDir = path.resolve("C:\\raja\\profiles");
+const profilesDir = path.resolve(process.env.Folder_Path);
 
 const app = express();
 
