@@ -668,7 +668,8 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
             .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
             .where(function () {
                 this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(CURDATE(), 0)")
-                    .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)");
+                    .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)")
+                    .orWhereRaw("(tasks.assigned_date <= CURDATE() AND tasks.due_date >= CURDATE())");
             })
             .andWhere({ 'employee_task_mapping.employee_id': emp_id, 'employee_task_mapping.status': '0' })
             .andWhereNot('tasks.status', '3');
