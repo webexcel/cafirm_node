@@ -279,7 +279,13 @@ export const getTaskList = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('tasks').select('task_id', 'task_name').where({ 'status': '0' });
+        const today = knex.fn.now();
+
+        let query = knex('tasks').select('task_id', 'task_name').andWhereNot('status', '3')
+            .andWhere(function () {
+                this.where('assigned_date', '<=', today)
+                    .andWhere('due_date', '>=', today);
+            });
 
         if (client_id && client_id.toString().toLowerCase() != "all") {
             query = query.where({ 'client_id': client_id });
