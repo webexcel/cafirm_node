@@ -1,5 +1,71 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import moment from "moment";
+
+export const getClients = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { emp_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Clients List Request Received", {
+            username: user_name,
+            reqdetails: "charts-getClients",
+        });
+
+        if (!emp_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "charts-getClients",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const getClientRes = await knex('employee_task_mapping as etm')
+            .join('tasks as t', 'etm.task_id', 't.task_id')
+            .join('clients as c', 't.client_id', 'c.client_id')
+            .select('c.client_id', 'c.client_name', 'c.display_name')
+            .where('etm.employee_id', emp_id)
+            .groupBy('c.client_id', 'c.client_name', 'c.display_name');
+
+        if (getClientRes) {
+            logger.info("Clients List retrieved successfully", {
+                username: user_name,
+                reqdetails: "charts-getClients",
+            });
+            return res.status(200).json({
+                message: "Clients List retrieved successfully",
+                data: getClientRes,
+                status: true,
+            });
+        } else {
+            logger.warn("No Clients Details found", {
+                username: user_name,
+                reqdetails: "charts-getClients",
+            });
+            return res.status(404).json({
+                message: "No Clients Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Clients List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "charts-getClients",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
 
 export const getYearlyReport = async (req, res, next) => {
     let knex = null;
@@ -25,30 +91,30 @@ export const getYearlyReport = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getTaskRes = await knex('time_sheets')
+        const task = await knex('employee_task_mapping as etm')
+            .join('tasks as t', 'etm.task_id', 't.task_id')
+            .where('etm.employee_id', emp_id)
+            .andWhere('t.status', '2')
             .select(
-                knex.raw('MONTH(`date`) as month'),
-                knex.raw('ROUND(SUM(`total_minutes`) / 60, 2) as hours')
+                knex.raw('MONTH(t.assigned_date) as month'),
+                knex.raw('COUNT(*) as task_count')
             )
-            .where('employee_id', emp_id)
-            .andWhere('status', '0')
-            .groupByRaw('MONTH(`date`)');
+            .groupByRaw('MONTH(t.assigned_date)');
 
-        const fullMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const months = moment.monthsShort();
+        const counts = Array(12).fill(0);
 
-        const hours = new Array(12).fill(0);
-
-        getTaskRes.forEach(row => {
-            const monthIndex = row.month - 1;
-            hours[monthIndex] = parseFloat(row.hours);
+        task.forEach(row => {
+            const index = row.month - 1;
+            counts[index] = row.task_count;
         });
 
         const response = {
-            months: fullMonths,
-            hours: hours
+            months,
+            counts
         };
 
-        if (getTaskRes) {
+        if (task) {
             logger.info("Year Report Data retrieved successfully", {
                 username: user_name,
                 reqdetails: "charts-getYearlyReport",
@@ -256,45 +322,61 @@ export const getWeeklyReport = async (req, res, next) => {
             .where('etm.employee_id', emp_id)
             .groupBy('t.client_id', 't.service', 'etm.employee_id', 't.task_id', 't.task_name');
 
-        // Step 1: Filter valid records
         const filteredResult = result.filter(row => row.total_minutes != null);
 
-        // Step 2: Extract unique client_ids
         const clientIds = [...new Set(filteredResult.map(row => row.client_id))];
 
-        // Step 3: Fetch all client names in a single query
         const clients = await knex("clients")
             .select("client_id", "client_name")
             .whereIn("client_id", clientIds);
 
-        // Step 4: Create a lookup map for client names
         const clientMap = clients.reduce((map, client) => {
             map[client.client_id] = client.client_name;
             return map;
         }, {});
 
-        // Step 5: Calculate total time
-        const total = filteredResult.reduce((sum, row) => sum + (parseInt(row.total_minutes) || 0), 0);
+        const totalMinutes = filteredResult.reduce(
+            (sum, row) => sum + (parseInt(row.total_minutes) || 0),
+            0
+        );
 
-        // Step 6: Generate pie data
-        const pieData = filteredResult.map(row => ({
-            client_id: row.client_id,
-            client_name: clientMap[row.client_id] || null,
-            employee_id: row.employee_id,
-            task_name: row.task_name,
-            value: parseInt(row.total_minutes),
-            percentage: ((parseInt(row.total_minutes) / total) * 100).toFixed(2)
+        const clientSummaryMap = {};
+
+        filteredResult.forEach(row => {
+            const clientId = row.client_id;
+            const minutes = parseInt(row.total_minutes);
+
+            if (!clientSummaryMap[clientId]) {
+                clientSummaryMap[clientId] = {
+                    client_id: clientId,
+                    client_name: clientMap[clientId] || null,
+                    total_minutes: 0
+                };
+            }
+
+            clientSummaryMap[clientId].total_minutes += minutes;
+        });
+
+        const clientSummary = Object.values(clientSummaryMap).map(client => ({
+            ...client,
+            hours: (client.total_minutes / 60).toFixed(2),
+            percentage: ((client.total_minutes / totalMinutes) * 100).toFixed(2)
         }));
 
+        let data = {
+            clientSummary,
+            total_minutes: totalMinutes,
+            total_hours: (totalMinutes / 60).toFixed(2)
+        };
 
-        if (pieData) {
+        if (data) {
             logger.info("Weekly Report Data retrieved successfully", {
                 username: user_name,
                 reqdetails: "charts-getWeeklyReport",
             });
             return res.status(200).json({
                 message: "Weekly Report Data retrieved successfully",
-                data: pieData,
+                data: data,
                 status: true,
             });
         } else {
