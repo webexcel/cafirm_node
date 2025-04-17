@@ -259,7 +259,7 @@ export const getMonthlyReport = async (req, res, next) => {
 export const getWeeklyReport = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, week_start, week_end, year } = req.body;
+        const { emp_id, client_id, week_start, week_end, year } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Get Weekly Report Data Request Received", {
@@ -267,7 +267,7 @@ export const getWeeklyReport = async (req, res, next) => {
             reqdetails: "charts-getWeeklyReport",
         });
 
-        if (!emp_id || !week_start || !week_end || !year) {
+        if (!emp_id || !client_id || !week_start || !week_end || !year) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "charts-getWeeklyReport",
@@ -280,80 +280,57 @@ export const getWeeklyReport = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const result = await knex('employee_task_mapping as etm')
+        const taskData = await knex('employee_task_mapping as etm')
             .join('tasks as t', 'etm.task_id', 't.task_id')
             .leftJoin('time_sheets as ts', function () {
-                this.on('etm.task_id', '=', 'ts.task_id')
-                    .andOn('etm.employee_id', '=', 'ts.employee_id')
-                    .andOn(knex.raw('ts.date BETWEEN ? AND ?', [week_start, week_end]))
-                    .andOn(knex.raw('YEAR(ts.date) = ?', [year]));
+                this.on('ts.task_id', '=', 't.task_id')
+                    .andOn('ts.employee_id', '=', 'etm.employee_id')
             })
             .select(
-                't.client_id',
-                't.service',
-                'etm.employee_id',
                 't.task_id',
                 't.task_name',
-                knex.raw('SUM(CAST(ts.total_minutes AS UNSIGNED)) as total_minutes')
+                't.client_id',
+                't.service',
+                knex.raw('IFNULL(SUM(ts.total_minutes), 0) as total_time')
             )
             .where('etm.employee_id', emp_id)
-            .groupBy('t.client_id', 't.service', 'etm.employee_id', 't.task_id', 't.task_name');
+            .andWhere('t.status', '2')
+            .andWhere('t.client_id', client_id)
+            .andWhereBetween('t.assigned_date', [week_start, week_end])
+            .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
+            .groupBy('t.task_id', 't.task_name');
 
-        const filteredResult = result.filter(row => row.total_minutes != null);
+        for (const row of taskData) {
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: row.client_id })
+                .first();
 
-        const clientIds = [...new Set(filteredResult.map(row => row.client_id))];
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: row.service })
+                .first();
 
-        const clients = await knex("clients")
-            .select("client_id", "client_name")
-            .whereIn("client_id", clientIds);
 
-        const clientMap = clients.reduce((map, client) => {
-            map[client.client_id] = client.client_name;
-            return map;
-        }, {});
+            row['client_name'] = client?.client_name || null;
+            row['service_name'] = service?.service_name || null;
+        }
 
-        const totalMinutes = filteredResult.reduce(
-            (sum, row) => sum + (parseInt(row.total_minutes) || 0),
-            0
-        );
+        const totalTime = taskData.reduce((sum, row) => sum + Number(row.total_time), 0);
 
-        const clientSummaryMap = {};
-
-        filteredResult.forEach(row => {
-            const clientId = row.client_id;
-            const minutes = parseInt(row.total_minutes);
-
-            if (!clientSummaryMap[clientId]) {
-                clientSummaryMap[clientId] = {
-                    client_id: clientId,
-                    client_name: clientMap[clientId] || null,
-                    total_minutes: 0
-                };
-            }
-
-            clientSummaryMap[clientId].total_minutes += minutes;
-        });
-
-        const clientSummary = Object.values(clientSummaryMap).map(client => ({
-            ...client,
-            hours: (client.total_minutes / 60).toFixed(2),
-            percentage: ((client.total_minutes / totalMinutes) * 100).toFixed(2)
+        const result = taskData.map(task => ({
+            ...task,
+            percentage: totalTime > 0 ? ((task.total_time / totalTime) * 100).toFixed(2) : '0.00'
         }));
 
-        let data = {
-            clientSummary,
-            total_minutes: totalMinutes,
-            total_hours: (totalMinutes / 60).toFixed(2)
-        };
-
-        if (data) {
+        if (taskData) {
             logger.info("Weekly Report Data retrieved successfully", {
                 username: user_name,
                 reqdetails: "charts-getWeeklyReport",
             });
             return res.status(200).json({
                 message: "Weekly Report Data retrieved successfully",
-                data: data,
+                data: result,
                 status: true,
             });
         } else {
