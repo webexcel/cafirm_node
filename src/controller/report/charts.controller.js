@@ -181,75 +181,46 @@ export const getMonthlyReport = async (req, res, next) => {
             .join('tasks as t', 'etm.task_id', 't.task_id')
             .leftJoin('time_sheets as ts', function () {
                 this.on('etm.task_id', '=', 'ts.task_id')
-                    .andOn('etm.employee_id', '=', 'ts.employee_id')
-                    .andOn(knex.raw('MONTH(ts.date) = ?', [month]))
-                    .andOn(knex.raw('YEAR(ts.date) = ?', [year]));
+                    .andOn('etm.employee_id', '=', 'ts.employee_id');
             })
             .select(
-                't.client_id',
-                'etm.employee_id',
                 't.task_id',
                 't.task_name',
-                't.status',
+                't.client_id',
                 't.service',
-                knex.raw('SUM(ts.total_minutes) as task_minutes')
+                knex.raw('SUM(ts.total_minutes) as total_minutes')
             )
             .where('etm.employee_id', emp_id)
             .andWhere('t.client_id', client_id)
             .andWhere('t.status', '2')
-            .groupBy('t.client_id', 'etm.employee_id', 't.task_id', 't.task_name', 'etm.status', 't.service');
+            .andWhereRaw('MONTH(t.assigned_date) = ?', [month])
+            .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
+            .groupBy('t.task_id', 't.task_name', 't.client_id', 't.service');
 
-        const grouped = {};
+        const response = [];
 
         for (const row of rawResult) {
-            const {
-                client_id,
-                employee_id,
-                task_id,
-                task_name,
-                status,
-                service,
-                task_minutes
-            } = row;
-
             const client = await knex("clients")
                 .select("client_name")
-                .where({ client_id: client_id }).first();
+                .where({ client_id: row.client_id })
+                .first();
 
-            if (!grouped[client_id]) {
-                grouped[client_id] = {
-                    client_id,
-                    client_name: client?.client_name || null,
-                    employee_id,
-                    services: [],
-                    total_time: 0
-                };
-            }
-
-            const serviceName = await knex("services")
+            const service = await knex("services")
                 .select("service_name")
-                .where({ service_id: service }).first();
+                .where({ service_id: row.service })
+                .first();
 
-            grouped[client_id].services.push({
-                task_id,
-                task_name,
-                status,
-                service_id: service,
-                service_name: serviceName?.service_name || null,
-                total_minutes: task_minutes ? Number(task_minutes) : 0
+            response.push({
+                task_id: row.task_id,
+                task_name: row.task_name,
+                client_id: row.client_id,
+                client_name: client?.client_name || null,
+                service_id: row.service,
+                service_name: service?.service_name || null,
+                total_minutes: row.total_minutes ? Number(row.total_minutes) : 0,
+                total_hours: row.total_minutes ? (Number(row.total_minutes) / 60).toFixed(2) : "0.00"
             });
-
-            if (task_minutes) {
-                grouped[client_id].total_time += Number(task_minutes);
-            }
         }
-
-        const finalResult = Object.values(grouped).map(client => ({
-            ...client,
-            total_time: (client.total_time / 60).toFixed(2) // convert to hours
-        }));
-
-
 
         if (rawResult) {
             logger.info("Monthly Report Data retrieved successfully", {
@@ -258,7 +229,7 @@ export const getMonthlyReport = async (req, res, next) => {
             });
             return res.status(200).json({
                 message: "Monthly Report Data retrieved successfully",
-                data: finalResult,
+                data: response,
                 status: true,
             });
         } else {
