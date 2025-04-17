@@ -102,16 +102,20 @@ export const getYearlyReport = async (req, res, next) => {
             .groupByRaw('MONTH(t.assigned_date)');
 
         const months = moment.monthsShort();
-        const counts = Array(12).fill(0);
 
-        task.forEach(row => {
-            const index = row.month - 1;
-            counts[index] = row.task_count;
+        const task_count_per_month = months.map((month, index) => {
+            const found = task.find(row => row.month === index + 1);
+            return {
+                month,
+                count: found ? found.count : 0
+            };
         });
 
+        const task_total = task_count_per_month.reduce((acc, curr) => acc + curr.count, 0);
+
         const response = {
-            months,
-            counts
+            task_total,
+            task_count_per_month
         };
 
         if (task) {
@@ -151,7 +155,7 @@ export const getYearlyReport = async (req, res, next) => {
 export const getMonthlyReport = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, month, year } = req.body;
+        const { emp_id, client_id, month, year } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Get Monthly Report Data Request Received", {
@@ -159,7 +163,7 @@ export const getMonthlyReport = async (req, res, next) => {
             reqdetails: "charts-getMonthlyReport",
         });
 
-        if (!emp_id || !month || !year) {
+        if (!emp_id || !client_id || !month || !year) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "charts-getMonthlyReport",
@@ -190,6 +194,7 @@ export const getMonthlyReport = async (req, res, next) => {
                 knex.raw('SUM(ts.total_minutes) as task_minutes')
             )
             .where('etm.employee_id', emp_id)
+            .andWhere('t.client_id', client_id)
             .andWhere('t.status', '2')
             .groupBy('t.client_id', 'etm.employee_id', 't.task_id', 't.task_name', 'etm.status', 't.service');
 
