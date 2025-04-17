@@ -70,7 +70,7 @@ export const getClients = async (req, res, next) => {
 export const getYearlyReport = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id } = req.body;
+        const { emp_id, year } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Get Year Report Data Request Received", {
@@ -78,7 +78,7 @@ export const getYearlyReport = async (req, res, next) => {
             reqdetails: "charts-getYearlyReport",
         });
 
-        if (!emp_id) {
+        if (!emp_id || !year) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "charts-getYearlyReport",
@@ -95,6 +95,7 @@ export const getYearlyReport = async (req, res, next) => {
             .join('tasks as t', 'etm.task_id', 't.task_id')
             .where('etm.employee_id', emp_id)
             .andWhere('t.status', '2')
+            .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .select(
                 knex.raw('MONTH(t.assigned_date) as month'),
                 knex.raw('COUNT(*) as task_count')
@@ -107,7 +108,7 @@ export const getYearlyReport = async (req, res, next) => {
             const found = task.find(row => row.month === index + 1);
             return {
                 month,
-                count: found ? found.count : 0
+                count: found ? found.task_count : 0
             };
         });
 
