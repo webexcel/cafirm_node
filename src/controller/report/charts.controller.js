@@ -259,7 +259,7 @@ export const getMonthlyReport = async (req, res, next) => {
 export const getWeeklyReport = async (req, res, next) => {
     let knex = null;
     try {
-        const { emp_id, client_id, week_start, week_end, year } = req.body;
+        const { emp_id, client_id, week_start, week_end } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Get Weekly Report Data Request Received", {
@@ -267,7 +267,7 @@ export const getWeeklyReport = async (req, res, next) => {
             reqdetails: "charts-getWeeklyReport",
         });
 
-        if (!emp_id || !client_id || !week_start || !week_end || !year) {
+        if (!emp_id || !client_id || !week_start || !week_end) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "charts-getWeeklyReport",
@@ -297,7 +297,7 @@ export const getWeeklyReport = async (req, res, next) => {
             .andWhere('t.status', '2')
             .andWhere('t.client_id', client_id)
             .andWhereBetween('t.assigned_date', [week_start, week_end])
-            .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
+            // .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .groupBy('t.task_id', 't.task_name');
 
         for (const row of taskData) {
