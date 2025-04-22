@@ -438,9 +438,8 @@ export const getYearlyClientReport = async (req, res, next) => {
             )
             .groupByRaw('MONTH(t.assigned_date)');
 
-        const taskStats = await knex('employee_task_mapping as etm')
-            .join('tasks as t', 'etm.task_id', 't.task_id')
-            .where('etm.employee_id', client_id)
+        const taskStats = await knex('tasks as t')
+            .where('t.client_id', client_id)
             .andWhereNot('t.status', '3')
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .select([
@@ -545,9 +544,8 @@ export const getMonthlyClientReport = async (req, res, next) => {
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .groupBy('t.task_id', 't.task_name', 't.client_id', 't.service');
 
-        const taskStats = await knex('employee_task_mapping as etm')
-            .join('tasks as t', 'etm.task_id', 't.task_id')
-            .where('etm.employee_id', client_id)
+        const taskStats = await knex('tasks as t')
+            .where('t.client_id', client_id)
             .andWhereNot('t.status', '3')
             .andWhereRaw('MONTH(t.assigned_date) = ?', [month])
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
@@ -644,13 +642,13 @@ export const getWeeklyClientReport = async (req, res, next) => {
         const week_start = moment().year(year).isoWeek(id).startOf('isoWeek').format('YYYY-MM-DD');
         const week_end = moment().year(year).isoWeek(id).endOf('isoWeek').format('YYYY-MM-DD');
 
+        console.log(week_start, week_end);
+
         knex = await createKnexInstance(dbname);
 
-        const taskData = await knex('employee_task_mapping as etm')
-            .join('tasks as t', 'etm.task_id', 't.task_id')
+        const taskData = await knex('tasks as t', 'etm.task_id', 't.task_id')
             .leftJoin('time_sheets as ts', function () {
                 this.on('ts.task_id', '=', 't.task_id')
-                    .andOn('ts.employee_id', '=', 'etm.employee_id')
             })
             .select(
                 't.task_id',
@@ -665,9 +663,8 @@ export const getWeeklyClientReport = async (req, res, next) => {
             // .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .groupBy('t.task_id', 't.task_name');
 
-        const taskStats = await knex('employee_task_mapping as etm')
-            .join('tasks as t', 'etm.task_id', 't.task_id')
-            .where('etm.employee_id', client_id)
+        const taskStats = await knex('tasks as t')
+            .where('t.client_id', client_id)
             .andWhereNot('t.status', '3')
             .andWhereBetween('t.assigned_date', [week_start, week_end])
             .select([
