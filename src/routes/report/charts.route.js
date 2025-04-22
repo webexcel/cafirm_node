@@ -1,19 +1,24 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getTaskCounts, getClients, getYearlyReport, getMonthlyReport, getWeeklyReport } from "../../controller/report/charts.controller.js";
+import { getClients, getYearlyEmployeeReport, getMonthlyEmployeeReport, getWeeklyEmployeeReport, 
+    getYearlyClientReport, getMonthlyClientReport, getWeeklyClientReport } from "../../controller/report/charts.controller.js";
 
 const chartRoutes = express.Router();
 
 chartRoutes.use(authenticateJWT);
 
-chartRoutes.post("/getTaskCounts", getTaskCounts);
-
 chartRoutes.post("/getClients", getClients);
 
-chartRoutes.post("/getYearlyReport", getYearlyReport);
+chartRoutes.post("/getYearlyEmployeeReport", getYearlyEmployeeReport);
 
-chartRoutes.post("/getMonthlyReport", getMonthlyReport);
+chartRoutes.post("/getMonthlyEmployeeReport", getMonthlyEmployeeReport);
 
-chartRoutes.post("/getWeeklyReport", getWeeklyReport);
+chartRoutes.post("/getWeeklyEmployeeReport", getWeeklyEmployeeReport);
+
+chartRoutes.post("/getYearlyClientReport", getYearlyClientReport);
+
+chartRoutes.post("/getMonthlyClientReport", getMonthlyClientReport);
+
+chartRoutes.post("/getWeeklyClientReport", getWeeklyClientReport);
 
 export default chartRoutes;
