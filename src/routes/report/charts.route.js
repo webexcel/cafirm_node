@@ -1,10 +1,12 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getClients, getYearlyReport, getMonthlyReport, getWeeklyReport } from "../../controller/report/charts.controller.js";
+import { getTaskCounts, getClients, getYearlyReport, getMonthlyReport, getWeeklyReport } from "../../controller/report/charts.controller.js";
 
 const chartRoutes = express.Router();
 
 chartRoutes.use(authenticateJWT);
+
+chartRoutes.post("/getTaskCounts", getTaskCounts);
 
 chartRoutes.post("/getClients", getClients);
 

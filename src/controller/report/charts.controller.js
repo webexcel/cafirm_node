@@ -2,6 +2,78 @@ import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 import moment from "moment";
 
+export const getTaskCounts = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { emp_id, client_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Task Count Request Received", {
+            username: user_name,
+            reqdetails: "charts-getTaskCounts",
+        });
+
+        if (!emp_id || !client_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "charts-getTaskCounts",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const taskStats = await knex('employee_task_mapping as etm')
+            .join('tasks as t', 'etm.task_id', 't.task_id')
+            .where('etm.employee_id', emp_id)
+            .andWhere('t.client_id', client_id)
+            .andWhereNot('t.status', '3')
+            .select([
+                knex.raw('COUNT(*) as total_tasks'),
+                knex.raw(`SUM(CASE WHEN t.status = '0' THEN 1 ELSE 0 END) as pending`),
+                knex.raw(`SUM(CASE WHEN t.status = '1' THEN 1 ELSE 0 END) as inprocess`),
+                knex.raw(`SUM(CASE WHEN t.status = '2' THEN 1 ELSE 0 END) as completed`)
+            ])
+            .first();
+
+
+        if (taskStats) {
+            logger.info("Task Count retrieved successfully", {
+                username: user_name,
+                reqdetails: "charts-getTaskCounts",
+            });
+            return res.status(200).json({
+                message: "Task Count retrieved successfully",
+                data: taskStats,
+                status: true,
+            });
+        } else {
+            logger.warn("No Task Count found", {
+                username: user_name,
+                reqdetails: "charts-getTaskCounts",
+            });
+            return res.status(404).json({
+                message: "No Task Count found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Task Count", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "charts-getTaskCounts",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
 export const getClients = async (req, res, next) => {
     let knex = null;
     try {
