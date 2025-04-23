@@ -25,7 +25,7 @@ export const login = async (req, res, next) => {
     const knex = await createKnexInstance();
 
     const user = await knex("employees")
-      .select("employee_id", "name", "email", "phone", "role", "password_hash")
+      .select("employee_id", "name", "email", "phone", "role", "password_hash", "photo")
       .where({ email, "status": "0" })
       .first();
 
@@ -37,7 +37,7 @@ export const login = async (req, res, next) => {
       });
     }
 
-    const { employee_id, name, role, email: userEmail, password_hash: storedPassword } = user;
+    const { employee_id, name, role, photo, email: userEmail, password_hash: storedPassword } = user;
 
     let isMatch = false;
     let needsUpdate = false;
@@ -74,7 +74,7 @@ export const login = async (req, res, next) => {
       status: true,
       message: "Login Successfully",
       token,
-      userdata: { employee_id, email: userEmail, name, role },
+      userdata: { employee_id, email: userEmail, name, role, photo },
     });
 
   } catch (error) {

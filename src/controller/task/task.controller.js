@@ -237,7 +237,8 @@ export const getServicesForTask = async (req, res, next) => {
                 this.select('*')
                     .from('tasks')
                     .whereRaw('tasks.service = services.service_id')
-                    .where('tasks.client_id', client_id);
+                    .where('tasks.client_id', client_id)
+                    .whereNotIn('tasks.status', ['2', '3']);
             });
 
         if (getServiceResult) {

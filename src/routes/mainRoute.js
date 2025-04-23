@@ -14,6 +14,7 @@ import dashboardRoutes from "./dashboard/dashboard.route.js";
 import calendarRoutes from "./calendar/calendar.route.js";
 import menuRoutes from "./configuration/menu.route.js";
 import leaveRequestRoutes from "./leaveRequest/leaveRequest.route.js";
+import chartRoutes from "./report/charts.route.js";
 
 const mainRoutes = express.Router();
 
@@ -46,5 +47,7 @@ mainRoutes.use("/calendar", calendarRoutes);
 mainRoutes.use("/menu", menuRoutes);
 
 mainRoutes.use("/leaverequest", leaveRequestRoutes);
+
+mainRoutes.use("/charts", chartRoutes);
 
 export default mainRoutes;
