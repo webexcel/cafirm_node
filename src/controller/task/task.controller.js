@@ -10,8 +10,8 @@ export const getTasksByType = async (req, res, next) => {
         const statusMap = {
             "all": null,
             "pending": '0',
-            "inprecess": '1',
-            "complotee": '2'
+            "inprocess": '1',
+            "completed": '2'
         };
 
         logger.info("Get Task List Request Received", {
@@ -585,8 +585,8 @@ export const getViewTasks = async (req, res, next) => {
         const statusMap = {
             "all": null,
             "pending": '0',
-            "inprecess": '1',
-            "complotee": '2'
+            "inprocess": '1',
+            "completed": '2'
         };
 
         logger.info("Get View Task List Request Received", {
@@ -626,10 +626,19 @@ export const getViewTasks = async (req, res, next) => {
                     .select("employee_id")
                     .where({ task_id: task.task_id });
 
-                const mappedEmployeeIds = mappedData.map(data => data.employee_id);
+                const mappedEmployeeIds = mappedData.map(data => (data.employee_id).toString());
 
-                if (mappedEmployeeIds.includes(emp_id)) {
-                    task["assignTo"] = [{ "emp_id": emp_id }];
+                if (mappedEmployeeIds.includes((emp_id).toString())) {
+                    task["assignTo"] = await Promise.all(
+                        mappedData.map(async (data) => {
+                            const employee = await knex("employees")
+                                .select("name", "photo")
+                                .where({ employee_id: emp_id })
+                                .first();
+    
+                            return { emp_id: emp_id, emp_name: employee?.name, photo: employee?.photo || null };
+                        })
+                    );
                     filteredTasks.push(task);
                 }
             }

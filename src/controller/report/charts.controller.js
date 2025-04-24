@@ -94,7 +94,8 @@ export const getYearlyEmployeeReport = async (req, res, next) => {
         const task = await knex('employee_task_mapping as etm')
             .join('tasks as t', 'etm.task_id', 't.task_id')
             .where('etm.employee_id', emp_id)
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .select(
                 knex.raw('MONTH(t.assigned_date) as month'),
@@ -205,7 +206,8 @@ export const getMonthlyEmployeeReport = async (req, res, next) => {
                 knex.raw('SUM(ts.total_minutes) as total_minutes')
             )
             .where('etm.employee_id', emp_id)
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhereRaw('MONTH(t.assigned_date) = ?', [month])
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .groupBy('t.task_id', 't.task_name', 't.client_id', 't.service');
@@ -325,7 +327,8 @@ export const getWeeklyEmployeeReport = async (req, res, next) => {
                 knex.raw('IFNULL(SUM(ts.total_minutes), 0) as total_time')
             )
             .where('etm.employee_id', emp_id)
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhere(function () {
                 this.where('t.assigned_date', '<=', week_end)
                     .andWhere('t.due_date', '>=', week_start);
@@ -433,7 +436,8 @@ export const getYearlyClientReport = async (req, res, next) => {
 
         const task = await knex('tasks as t')
             .where('t.client_id', client_id)
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .select(
                 knex.raw('MONTH(t.assigned_date) as month'),
@@ -542,7 +546,8 @@ export const getMonthlyClientReport = async (req, res, next) => {
                 knex.raw('SUM(ts.total_minutes) as total_minutes')
             )
             .andWhere('t.client_id', client_id)
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhereRaw('MONTH(t.assigned_date) = ?', [month])
             .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
             .groupBy('t.task_id', 't.task_name', 't.client_id', 't.service');
@@ -660,7 +665,8 @@ export const getWeeklyClientReport = async (req, res, next) => {
                 't.service',
                 knex.raw('IFNULL(SUM(ts.total_minutes), 0) as total_time')
             )
-            .andWhere('t.status', '2')
+            .whereNotIn('t.status', ['3'])
+            // .andWhere('t.status', '2')
             .andWhere('t.client_id', client_id)
             .andWhere(function () {
                 this.where('t.assigned_date', '<=', week_end)

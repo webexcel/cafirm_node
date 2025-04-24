@@ -153,9 +153,9 @@ export const getService = async (req, res, next) => {
         let getTaskRes;
 
         if (client_id && client_id.toString().toLowerCase() != "all") {
-            getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
+            getTaskRes = await knex('tasks').select('*').where({'client_id': client_id }).whereNotIn('tasks.status', ['3']);
         } else {
-            getTaskRes = await knex('tasks').select('*').where({ 'status': '0' });
+            getTaskRes = await knex('tasks').select('*').whereNotIn('tasks.status', ['3']);
         }
 
         const uniqueServices = [...new Set(getTaskRes.map(task => task.service))];
