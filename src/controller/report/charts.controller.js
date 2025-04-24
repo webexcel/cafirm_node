@@ -309,8 +309,6 @@ export const getWeeklyEmployeeReport = async (req, res, next) => {
         const week_start = moment().year(year).isoWeek(id).startOf('isoWeek').format('YYYY-MM-DD');
         const week_end = moment().year(year).isoWeek(id).endOf('isoWeek').format('YYYY-MM-DD');
 
-        console.log(week_start, week_end);
-
         knex = await createKnexInstance(dbname);
 
         const taskData = await knex('employee_task_mapping as etm')
@@ -328,15 +326,20 @@ export const getWeeklyEmployeeReport = async (req, res, next) => {
             )
             .where('etm.employee_id', emp_id)
             .andWhere('t.status', '2')
-            .andWhereBetween('t.assigned_date', [week_start, week_end])
-            // .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
+            .andWhere(function () {
+                this.where('t.assigned_date', '<=', week_end)
+                    .andWhere('t.due_date', '>=', week_start);
+            })
             .groupBy('t.task_id', 't.task_name');
 
         const taskStats = await knex('employee_task_mapping as etm')
             .join('tasks as t', 'etm.task_id', 't.task_id')
             .where('etm.employee_id', emp_id)
             .andWhereNot('t.status', '3')
-            .andWhereBetween('t.assigned_date', [week_start, week_end])
+            .andWhere(function () {
+                this.where('t.assigned_date', '<=', week_end)
+                    .andWhere('t.due_date', '>=', week_start);
+            })
             .select([
                 knex.raw('COUNT(*) as total_tasks'),
                 knex.raw(`SUM(CASE WHEN t.status = '0' THEN 1 ELSE 0 END) as pending`),
@@ -659,14 +662,19 @@ export const getWeeklyClientReport = async (req, res, next) => {
             )
             .andWhere('t.status', '2')
             .andWhere('t.client_id', client_id)
-            .andWhereBetween('t.assigned_date', [week_start, week_end])
-            // .andWhereRaw('YEAR(t.assigned_date) = ?', [year])
+            .andWhere(function () {
+                this.where('t.assigned_date', '<=', week_end)
+                    .andWhere('t.due_date', '>=', week_start);
+            })
             .groupBy('t.task_id', 't.task_name');
 
         const taskStats = await knex('tasks as t')
             .where('t.client_id', client_id)
             .andWhereNot('t.status', '3')
-            .andWhereBetween('t.assigned_date', [week_start, week_end])
+            .andWhere(function () {
+                this.where('t.assigned_date', '<=', week_end)
+                    .andWhere('t.due_date', '>=', week_start);
+            })
             .select([
                 knex.raw('COUNT(*) as total_tasks'),
                 knex.raw(`SUM(CASE WHEN t.status = '0' THEN 1 ELSE 0 END) as pending`),
