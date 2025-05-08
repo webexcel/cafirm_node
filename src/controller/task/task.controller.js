@@ -579,7 +579,7 @@ export const deleteTask = async (req, res, next) => {
 export const getViewTasks = async (req, res, next) => {
     let knex = null;
     try {
-        const { cleint_id, service_id, emp_id, priority, status } = req.body;
+        const { client_id, service_id, emp_id, priority, status } = req.body;
         const { dbname, user_name } = req.user;
 
         const statusMap = {
@@ -598,8 +598,8 @@ export const getViewTasks = async (req, res, next) => {
 
         let query = knex('tasks').select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"));
 
-        if (cleint_id && cleint_id.toString().toLowerCase() != "all") {
-            query = query.where('tasks.client_id', cleint_id);
+        if (client_id && client_id.toString().toLowerCase() != "all") {
+            query = query.where('tasks.client_id', client_id);
         }
 
         if (service_id && service_id.toString().toLowerCase() != "all") {
