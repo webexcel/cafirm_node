@@ -279,7 +279,7 @@ export const getTaskList = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const today = knex.fn.now();
+        const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
         let query = knex('tasks').select('task_id', 'task_name').andWhereNot('status', '3')
             .andWhere(function () {
