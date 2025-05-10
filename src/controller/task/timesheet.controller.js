@@ -281,7 +281,7 @@ export const getTaskList = async (req, res, next) => {
 
         const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
-        let query = knex('tasks').select('task_id', 'task_name').andWhereNot('status', '3')
+        let query = knex('tasks').select('task_id', 'task_name', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date")).andWhereNot('status', '3')
             .andWhere(function () {
                 this.where('assigned_date', '<=', today)
                     .andWhere('due_date', '>=', today);
