@@ -181,9 +181,15 @@ export const getOperationMappedList = async (req, res, next) => {
             .select(
                 'tbl_menus.menu_id as menu_id',
                 'tbl_menus.menu_name as menu_name',
-                knex.raw('JSON_ARRAYAGG(tbl_operations.operation_name) as operations')
+                knex.raw('GROUP_CONCAT(tbl_operations.operation_name) as operations')
             ).where("tbl_menus.status", "0")
             .groupBy('tbl_menus.menu_id', 'tbl_menus.menu_name');
+
+        if (getResult.length > 0) {
+            getResult.forEach((item) => {
+                item.operations = item.operations ? item.operations.split(',') : [];
+            });
+        }
 
         if (getResult) {
             logger.info("Operations Mapped List retrieved successfully", {
