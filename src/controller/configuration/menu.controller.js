@@ -396,7 +396,7 @@ export const updateMenu = async (req, res, next) => {
             reqdetails: "menu-updateMenu",
         });
 
-        if (!menu_id || !type || !menu_name) {
+        if (!menu_id || !menu_name) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "menu-updateMenu",
@@ -409,37 +409,37 @@ export const updateMenu = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let updateResult;
+        let updateResult = await knex('tbl_menus').update({"menu_name": menu_name}).where("menu_id", menu_id);
 
-        if (type == "0") {
-            const parentMenus = await knex('tbl_menus').select('*').whereNull('parent_id');
-            const existingRecord = await knex('tbl_menus').select("*").where("menu_id", menu_id).first();
-            if (existingRecord.parent_id == null) {
-                updateResult = await knex('tbl_menus').update({
-                    menu_name: menu_name
-                }).where("menu_id", menu_id);
-            } else {
-                updateResult = await knex('tbl_menus').update({
-                    parent_id: null,
-                    menu_name: menu_name,
-                    sequence_number: parentMenus.length + 1
-                }).where("menu_id", menu_id);
-            }
-        } else if (type == "1") {
-            const subMenus = await knex('tbl_menus').select('*').where('parent_id', parent_id);
-            const existingRecord = await knex('tbl_menus').select("*").where("menu_id", menu_id).first();
-            if (existingRecord.parent_id == null || existingRecord.parent_id != parent_id) {
-                updateResult = await knex('tbl_menus').update({
-                    parent_id: parent_id,
-                    menu_name: menu_name,
-                    sequence_number: subMenus.length + 1
-                }).where("menu_id", menu_id);
-            } else {
-                updateResult = await knex('tbl_menus').update({
-                    menu_name: menu_name
-                }).where("menu_id", menu_id);
-            }
-        }
+        // if (type == "0") {
+        //     const parentMenus = await knex('tbl_menus').select('*').whereNull('parent_id');
+        //     const existingRecord = await knex('tbl_menus').select("*").where("menu_id", menu_id).first();
+        //     if (existingRecord.parent_id == null) {
+        //         updateResult = await knex('tbl_menus').update({
+        //             menu_name: menu_name
+        //         }).where("menu_id", menu_id);
+        //     } else {
+        //         updateResult = await knex('tbl_menus').update({
+        //             parent_id: null,
+        //             menu_name: menu_name,
+        //             sequence_number: parentMenus.length + 1
+        //         }).where("menu_id", menu_id);
+        //     }
+        // } else if (type == "1") {
+        //     const subMenus = await knex('tbl_menus').select('*').where('parent_id', parent_id);
+        //     const existingRecord = await knex('tbl_menus').select("*").where("menu_id", menu_id).first();
+        //     if (existingRecord.parent_id == null || existingRecord.parent_id != parent_id) {
+        //         updateResult = await knex('tbl_menus').update({
+        //             parent_id: parent_id,
+        //             menu_name: menu_name,
+        //             sequence_number: subMenus.length + 1
+        //         }).where("menu_id", menu_id);
+        //     } else {
+        //         updateResult = await knex('tbl_menus').update({
+        //             menu_name: menu_name
+        //         }).where("menu_id", menu_id);
+        //     }
+        // }
 
         if (updateResult) {
             logger.info("Menu Updated successfully", {
