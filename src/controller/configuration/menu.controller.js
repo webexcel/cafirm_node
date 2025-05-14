@@ -251,7 +251,7 @@ export const addMenu = async (req, res, next) => {
 
         const existingMenu = await knex('tbl_menus')
             .where(function () {
-                this.where('menu_name', menu_name);
+                this.where('menu_name', menu_name).andWhere('status', '0');
             })
             .first();
 
@@ -276,6 +276,22 @@ export const addMenu = async (req, res, next) => {
                 created_by: user_id,
             });
         } else if (type == "1") {
+            const permissions = await knex("tbl_menu_operations")
+                .select("menu_operation_id")
+                .where("menu_id", parent_id);
+
+            if (permissions.length > 0) {
+                const menuOperationIds = permissions.map(p => p.menu_operation_id);
+
+                await knex("tbl_permission_operations")
+                    .whereIn("menu_operation_id", menuOperationIds)
+                    .del();
+
+                await knex("tbl_menu_operations")
+                    .whereIn("menu_operation_id", menuOperationIds)
+                    .del();
+            }
+
             const subMenus = await knex('tbl_menus').select('*').where('parent_id', parent_id);
             insertResult = await knex('tbl_menus').insert({
                 parent_id: parent_id,
@@ -409,7 +425,7 @@ export const updateMenu = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let updateResult = await knex('tbl_menus').update({"menu_name": menu_name}).where("menu_id", menu_id);
+        let updateResult = await knex('tbl_menus').update({ "menu_name": menu_name }).where("menu_id", menu_id);
 
         // if (type == "0") {
         //     const parentMenus = await knex('tbl_menus').select('*').whereNull('parent_id');
