@@ -318,12 +318,15 @@ export const addTask = async (req, res, next) => {
             });
         }
 
+        let startDate = assignDate.includes("T") ? assignDate.split("T")[0] : assignDate;
+        let endDate = dueDate.includes("T") ? dueDate.split("T")[0] : dueDate;
+
         const insertTaskResult = await knex('tasks').insert({
             client_id: client,
             task_name: name,
             service: service,
-            assigned_date: assignDate,
-            due_date: dueDate,
+            assigned_date: startDate,
+            due_date: endDate,
             priority: priority,
             description: description
         });
@@ -401,11 +404,14 @@ export const editTask = async (req, res, next) => {
             });
         }
 
+        let startDate = assignDate.includes("T") ? assignDate.split("T")[0] : assignDate;
+        let endDate = dueDate.includes("T") ? dueDate.split("T")[0] : dueDate;
+
         knex = await createKnexInstance(dbname);
         const updateTaskResult = await knex('tasks').update({
             task_name: task_name,
-            assigned_date: assignDate,
-            due_date: dueDate,
+            assigned_date: startDate,
+            due_date: endDate,
             priority: priority,
             description: description,
             status: status
@@ -611,7 +617,7 @@ export const getViewTasks = async (req, res, next) => {
         }
 
         if (statusMap[status] !== null && statusMap[status] !== undefined) {
-            query = query.where('tasks.status', statusMap[showType]);
+            query = query.where('tasks.status', statusMap[status]);
         } else {
             query = query.whereIn('tasks.status', ['0', '1', '2']);
         }

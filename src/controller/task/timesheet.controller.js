@@ -684,7 +684,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         for (let task of tasks) {
             const timesheets = await knex('time_sheets')
                 .select('time_sheet_id', 'employee_id', 'task_id', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"), 'total_minutes', 'total_time', 'status')
-                .where({ 'task_id': task.task_id, 'employee_id': emp_id }).whereRaw("YEARWEEK(date, 0) = YEARWEEK(NOW(), 0)");
+                .where({ 'task_id': task.task_id, 'employee_id': emp_id, 'status': "0" }).whereRaw("YEARWEEK(date, 0) = YEARWEEK(NOW(), 0)");
             task["timesheet"] = timesheets.length > 0 ? timesheets : [];
         }
 
