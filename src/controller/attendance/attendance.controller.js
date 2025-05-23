@@ -420,7 +420,7 @@ export const mobTimerData = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const result = await knex('attendance')
-      .where('employee_id', emp_id)
+      .where({'employee_id': emp_id, 'status': "0"})
       .andWhereRaw('login_date = CURRENT_DATE')
       .sum({
         total_seconds: knex.raw(`
@@ -433,7 +433,7 @@ export const mobTimerData = async (req, res, next) => {
       });
 
     const runningTimer = await knex('attendance').select("attendance_id")
-      .where('employee_id', emp_id)
+      .where({'employee_id': emp_id, 'status': "0"})
       .andWhereRaw('login_date = CURRENT_DATE')
       .whereNull('logout_date');
 
