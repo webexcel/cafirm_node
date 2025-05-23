@@ -175,7 +175,7 @@ export const getUserPermissions = async (req, res, next) => {
         "m.menu_id as submenu_id",
         "m.menu_name as submenu",
         "m.sequence_number as submenu_sequence",
-        // "m.mob_path as mob_path",
+        "m.mob_path as mob_path",
         "o.operation_name",
         "up.granted_at"
       )
@@ -200,7 +200,7 @@ export const getUserPermissions = async (req, res, next) => {
           acc[curr.submenu_id] = {
             parent_menu: curr.submenu,
             sequence_number: curr.submenu_sequence,
-            // mobile_path: curr.mob_path,
+            mobile_path: curr.mob_path,
             operations: [],
           };
         }
@@ -221,7 +221,7 @@ export const getUserPermissions = async (req, res, next) => {
           acc[curr.parent_menu_id].submenus[curr.submenu_id] = {
             submenu: curr.submenu,
             sequence_number: curr.submenu_sequence,
-            // mobile_path: curr.mob_path,
+            mobile_path: curr.mob_path,
             operations: [],
           };
         }

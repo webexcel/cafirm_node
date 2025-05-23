@@ -319,3 +319,6 @@ ADD COLUMN `granted_at` TIMESTAMP NULL DEFAULT NULL AFTER `granted_by`;
 
 ALTER TABLE `ca_firm`.`tbl_permissions` 
 AUTO_INCREMENT = 3 ;
+
+ALTER TABLE `ca_firm`.`tbl_menus` 
+ADD COLUMN `mob_path` VARCHAR(255) NULL DEFAULT '' AFTER `menu_name`;
