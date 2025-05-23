@@ -174,7 +174,6 @@ export const editClient = async (req, res, next) => {
 
     if (key == "photo") {
       const uploadDir = process.env.Folder_Path + "\\profiles";
-      console.log(uploadDir);
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }

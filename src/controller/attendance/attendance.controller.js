@@ -437,8 +437,6 @@ export const mobTimerData = async (req, res, next) => {
       .andWhereRaw('login_date = CURRENT_DATE')
       .whereNull('logout_date');
 
-    console.log(result[0].total_seconds);
-
     if (result) {
       logger.info("Today Attendance Timer Data retrieved successfully", {
         username: user_name,

@@ -650,8 +650,6 @@ export const getWeeklyClientReport = async (req, res, next) => {
         const week_start = moment().year(year).isoWeek(id).startOf('isoWeek').format('YYYY-MM-DD');
         const week_end = moment().year(year).isoWeek(id).endOf('isoWeek').format('YYYY-MM-DD');
 
-        console.log(week_start, week_end);
-
         knex = await createKnexInstance(dbname);
 
         const taskData = await knex('tasks as t', 'etm.task_id', 't.task_id')

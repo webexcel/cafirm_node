@@ -351,7 +351,6 @@ export const getMenuOperations = async (req, res, next) => {
       );
 
     const sortedmenuOperations = processMenuOperations(menuOperations);
-    console.log(sortedmenuOperations, "--menuOperations");
 
     // Respond with the structured data
     res.status(200).json({
