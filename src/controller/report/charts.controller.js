@@ -458,7 +458,8 @@ export const getEmployeeReport = async (req, res, next) => {
                 this.where('t.assigned_date', '<=', endDate)
                     .andWhere('t.due_date', '>=', startDate);
             })
-            .groupBy('t.task_id', 't.task_name');
+            .groupBy('t.task_id', 't.task_name')
+            .orderBy('t.created_at', 'desc');
 
         const taskStats = await knex('employee_task_mapping as etm')
             .join('tasks as t', 'etm.task_id', 't.task_id')
@@ -476,9 +477,16 @@ export const getEmployeeReport = async (req, res, next) => {
             ])
             .first();
 
+        const statusMap = {
+            "0": "Pending",
+            "1": "In Process",
+            "2": "Completed"
+        };
+
         for (const row of taskData) {
+            row["task_status"] = statusMap[row.status];
             const client = await knex("clients")
-                .select("client_name")
+                .select("client_name", "photo")
                 .where({ client_id: row.client_id })
                 .first();
 
@@ -487,8 +495,14 @@ export const getEmployeeReport = async (req, res, next) => {
                 .where({ service_id: row.service })
                 .first();
 
+            const assignedEmployees = await knex("employee_task_mapping")
+                .join("employees", "employees.employee_id", "employee_task_mapping.employee_id")
+                .select("employees.employee_id", "employees.name", "employees.photo")
+                .where({ "employee_task_mapping.task_id": row.task_id, "employee_task_mapping.status": "0", "employees.status": "0" });
 
+            row['assigned_employees'] = assignedEmployees;
             row['client_name'] = client?.client_name || null;
+            row['client_photo'] = client?.photo || null;
             row['service_name'] = service?.service_name || null;
         }
 
@@ -918,7 +932,8 @@ export const getClientReport = async (req, res, next) => {
                 this.where('t.assigned_date', '<=', endDate)
                     .andWhere('t.due_date', '>=', startDate);
             })
-            .groupBy('t.task_id', 't.task_name');
+            .groupBy('t.task_id', 't.task_name')
+            .orderBy('t.created_at', 'desc');
 
         const taskStats = await knex('tasks as t')
             .where('t.client_id', client_id)
@@ -935,9 +950,16 @@ export const getClientReport = async (req, res, next) => {
             ])
             .first();
 
+        const statusMap = {
+            "0": "Pending",
+            "1": "In Process",
+            "2": "Completed"
+        };
+
         for (const row of taskData) {
+            row["task_status"] = statusMap[row.status];
             const client = await knex("clients")
-                .select("client_name")
+                .select("client_name", "photo")
                 .where({ client_id: row.client_id })
                 .first();
 
@@ -946,8 +968,14 @@ export const getClientReport = async (req, res, next) => {
                 .where({ service_id: row.service })
                 .first();
 
+            const assignedEmployees = await knex("employee_task_mapping")
+                .join("employees", "employees.employee_id", "employee_task_mapping.employee_id")
+                .select("employees.employee_id", "employees.name", "employees.photo")
+                .where({ "employee_task_mapping.task_id": row.task_id, "employee_task_mapping.status": "0", "employees.status": "0" });
 
+            row['assigned_employees'] = assignedEmployees;
             row['client_name'] = client?.client_name || null;
+            row['client_photo'] = client?.photo || null;
             row['service_name'] = service?.service_name || null;
         }
 
