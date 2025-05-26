@@ -58,7 +58,7 @@ export const getAttendance = async (req, res, next) => {
 export const loginAttendance = async (req, res, next) => {
   let knex = null;
   try {
-    const { emp_id, start_time, start_date } = req.body;
+    const { emp_id, start_time, start_date, latitude, longitude } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Attendance Request Received", {
@@ -83,7 +83,9 @@ export const loginAttendance = async (req, res, next) => {
       .insert({
         employee_id: emp_id,
         login_date: knex.raw('?', [start_date]),
-        login_time: knex.raw('?', [start_time])
+        login_time: knex.raw('?', [start_time]),
+        login_latitude: latitude,
+        login_longitude: longitude
       });
 
     if (insertAttResult) {
@@ -119,7 +121,7 @@ export const loginAttendance = async (req, res, next) => {
 export const logoutAttendance = async (req, res, next) => {
   let knex = null;
   try {
-    const { att_id, logout_date, logout_time } = req.body;
+    const { att_id, logout_date, logout_time, latitude, longitude } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Attendance Request Received", {
@@ -170,7 +172,9 @@ export const logoutAttendance = async (req, res, next) => {
         logout_date: logout_date,
         logout_time: logout_time,
         total_minutes: totalMinutes,
-        total_time: formattedTime
+        total_time: formattedTime,
+        logout_latitude: latitude,
+        logout_longitude: longitude
       }).where("attendance_id", att_id);
 
     if (updateAttResult) {
@@ -420,7 +424,7 @@ export const mobTimerData = async (req, res, next) => {
     knex = await createKnexInstance(dbname);
 
     const result = await knex('attendance')
-      .where({'employee_id': emp_id, 'status': "0"})
+      .where({ 'employee_id': emp_id, 'status': "0" })
       .andWhereRaw('login_date = CURRENT_DATE')
       .sum({
         total_seconds: knex.raw(`
@@ -433,7 +437,7 @@ export const mobTimerData = async (req, res, next) => {
       });
 
     const runningTimer = await knex('attendance').select("attendance_id")
-      .where({'employee_id': emp_id, 'status': "0"})
+      .where({ 'employee_id': emp_id, 'status': "0" })
       .andWhereRaw('login_date = CURRENT_DATE')
       .whereNull('logout_date');
 
