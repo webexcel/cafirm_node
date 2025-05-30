@@ -153,9 +153,9 @@ export const getService = async (req, res, next) => {
         let getTaskRes;
 
         if (client_id && client_id.toString().toLowerCase() != "all") {
-            getTaskRes = await knex('tasks').select('*').where({ 'status': '0', 'client_id': client_id });
+            getTaskRes = await knex('tasks').select('*').where({ 'client_id': client_id }).whereNotIn('tasks.status', ['3']);
         } else {
-            getTaskRes = await knex('tasks').select('*').where({ 'status': '0' });
+            getTaskRes = await knex('tasks').select('*').whereNotIn('tasks.status', ['3']);
         }
 
         const uniqueServices = [...new Set(getTaskRes.map(task => task.service))];
@@ -279,9 +279,9 @@ export const getTaskList = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const today = knex.fn.now();
+        const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
-        let query = knex('tasks').select('task_id', 'task_name').andWhereNot('status', '3')
+        let query = knex('tasks').select('task_id', 'task_name', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date")).andWhereNot('status', '3')
             .andWhere(function () {
                 this.where('assigned_date', '<=', today)
                     .andWhere('due_date', '>=', today);
@@ -640,14 +640,14 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
     let knex = null;
     try {
         const { dbname, user_name } = req.user;
-        const { emp_id } = req.body;
+        const { emp_id, week_id, year } = req.body;
 
         logger.info("Get Time-Sheet Weekly List Request Received", {
             username: user_name,
             reqdetails: "timesheet-viewWeeklyTimesheet",
         });
 
-        if (!emp_id) {
+        if (!emp_id || !week_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "timesheet-viewWeeklyTimesheet",
@@ -659,6 +659,9 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         }
 
         knex = await createKnexInstance(dbname);
+
+        const week_start = moment().year(year).isoWeek(week_id).startOf('isoWeek').format('YYYY-MM-DD');
+        const week_end = moment().year(year).isoWeek(week_id).endOf('isoWeek').format('YYYY-MM-DD');
 
         const tasks = await knex('tasks')
             .distinct('tasks.task_id')
@@ -673,9 +676,12 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
             )
             .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
             .where(function () {
-                this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(CURDATE(), 0)")
-                    .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)")
-                    .orWhereRaw("(tasks.assigned_date <= CURDATE() AND tasks.due_date >= CURDATE())");
+                // this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(CURDATE(), 0)")
+                //     .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)")
+                //     .orWhereRaw("(tasks.assigned_date <= CURDATE() AND tasks.due_date >= CURDATE())");
+                this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(?, 0)", [week_start])
+                    .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(?, 0)", [week_start])
+                    .orWhereRaw("(tasks.assigned_date <= ? AND tasks.due_date >= ?)", [week_end, week_start]);
             })
             .andWhere({ 'employee_task_mapping.employee_id': emp_id, 'employee_task_mapping.status': '0' })
             .andWhereNot('tasks.status', '3');
@@ -684,7 +690,7 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
         for (let task of tasks) {
             const timesheets = await knex('time_sheets')
                 .select('time_sheet_id', 'employee_id', 'task_id', knex.raw("DATE_FORMAT(date, '%Y-%m-%d') as date"), 'total_minutes', 'total_time', 'status')
-                .where({ 'task_id': task.task_id, 'employee_id': emp_id }).whereRaw("YEARWEEK(date, 0) = YEARWEEK(NOW(), 0)");
+                .where({ 'task_id': task.task_id, 'employee_id': emp_id, 'status': "0" }).whereRaw("YEARWEEK(date, 0) = YEARWEEK(NOW(), 0)");
             task["timesheet"] = timesheets.length > 0 ? timesheets : [];
         }
 

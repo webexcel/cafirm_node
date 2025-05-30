@@ -10,8 +10,8 @@ export const getTasksByType = async (req, res, next) => {
         const statusMap = {
             "all": null,
             "pending": '0',
-            "inprecess": '1',
-            "complotee": '2'
+            "inprocess": '1',
+            "completed": '2'
         };
 
         logger.info("Get Task List Request Received", {
@@ -318,12 +318,15 @@ export const addTask = async (req, res, next) => {
             });
         }
 
+        let startDate = assignDate.includes("T") ? assignDate.split("T")[0] : assignDate;
+        let endDate = dueDate.includes("T") ? dueDate.split("T")[0] : dueDate;
+
         const insertTaskResult = await knex('tasks').insert({
             client_id: client,
             task_name: name,
             service: service,
-            assigned_date: assignDate,
-            due_date: dueDate,
+            assigned_date: startDate,
+            due_date: endDate,
             priority: priority,
             description: description
         });
@@ -401,11 +404,14 @@ export const editTask = async (req, res, next) => {
             });
         }
 
+        let startDate = assignDate.includes("T") ? assignDate.split("T")[0] : assignDate;
+        let endDate = dueDate.includes("T") ? dueDate.split("T")[0] : dueDate;
+
         knex = await createKnexInstance(dbname);
         const updateTaskResult = await knex('tasks').update({
             task_name: task_name,
-            assigned_date: assignDate,
-            due_date: dueDate,
+            assigned_date: startDate,
+            due_date: endDate,
             priority: priority,
             description: description,
             status: status
@@ -579,14 +585,14 @@ export const deleteTask = async (req, res, next) => {
 export const getViewTasks = async (req, res, next) => {
     let knex = null;
     try {
-        const { cleint_id, service_id, emp_id, priority, status } = req.body;
+        const { client_id, service_id, emp_id, priority, status } = req.body;
         const { dbname, user_name } = req.user;
 
         const statusMap = {
             "all": null,
             "pending": '0',
-            "inprecess": '1',
-            "complotee": '2'
+            "inprocess": '1',
+            "completed": '2'
         };
 
         logger.info("Get View Task List Request Received", {
@@ -598,8 +604,8 @@ export const getViewTasks = async (req, res, next) => {
 
         let query = knex('tasks').select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"));
 
-        if (cleint_id && cleint_id.toString().toLowerCase() != "all") {
-            query = query.where('tasks.client_id', cleint_id);
+        if (client_id && client_id.toString().toLowerCase() != "all") {
+            query = query.where('tasks.client_id', client_id);
         }
 
         if (service_id && service_id.toString().toLowerCase() != "all") {
@@ -611,7 +617,7 @@ export const getViewTasks = async (req, res, next) => {
         }
 
         if (statusMap[status] !== null && statusMap[status] !== undefined) {
-            query = query.where('tasks.status', statusMap[showType]);
+            query = query.where('tasks.status', statusMap[status]);
         } else {
             query = query.whereIn('tasks.status', ['0', '1', '2']);
         }
@@ -626,10 +632,19 @@ export const getViewTasks = async (req, res, next) => {
                     .select("employee_id")
                     .where({ task_id: task.task_id });
 
-                const mappedEmployeeIds = mappedData.map(data => data.employee_id);
+                const mappedEmployeeIds = mappedData.map(data => (data.employee_id).toString());
 
-                if (mappedEmployeeIds.includes(emp_id)) {
-                    task["assignTo"] = [{ "emp_id": emp_id }];
+                if (mappedEmployeeIds.includes((emp_id).toString())) {
+                    task["assignTo"] = await Promise.all(
+                        mappedData.map(async (data) => {
+                            const employee = await knex("employees")
+                                .select("name", "photo")
+                                .where({ employee_id: emp_id })
+                                .first();
+    
+                            return { emp_id: emp_id, emp_name: employee?.name, photo: employee?.photo || null };
+                        })
+                    );
                     filteredTasks.push(task);
                 }
             }

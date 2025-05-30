@@ -10,8 +10,8 @@ export const getTicketsByType = async (req, res, next) => {
         const statusMap = {
             "all": null,
             "pending": '0',
-            "inprecess": '1',
-            "complotee": '2'
+            "inprocess": '1',
+            "completed": '2'
         };
 
         logger.info("Get Tickets List Request Received", {
@@ -128,12 +128,15 @@ export const addTicket = async (req, res, next) => {
         //     });
         // }
 
+        let startDate = assignDate.includes("T") ? assignDate.split("T")[0] : assignDate;
+        let endDate = dueDate.includes("T") ? dueDate.split("T")[0] : dueDate;
+
         const insertTicketResult = await knex('tickets').insert({
             ticket_name: name,
             service: service,
             assigned_to: knex.raw('?', [JSON.stringify(assignTo)]),
-            assigned_date: assignDate,
-            due_date: dueDate,
+            assigned_date: startDate,
+            due_date: endDate,
             priority: priority
         });
 

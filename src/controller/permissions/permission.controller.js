@@ -175,10 +175,11 @@ export const getUserPermissions = async (req, res, next) => {
         "m.menu_id as submenu_id",
         "m.menu_name as submenu",
         "m.sequence_number as submenu_sequence",
+        // "m.mob_path as mob_path",
         "o.operation_name",
         "up.granted_at"
       )
-      .where("up.employee_id", user_id)
+      .where({"up.employee_id": user_id, "m.status": "0"})
       .orderBy([
         { column: "parent_sequence", order: "asc" },
         { column: "submenu_sequence", order: "asc" },
@@ -199,6 +200,7 @@ export const getUserPermissions = async (req, res, next) => {
           acc[curr.submenu_id] = {
             parent_menu: curr.submenu,
             sequence_number: curr.submenu_sequence,
+            // mobile_path: curr.mob_path,
             operations: [],
           };
         }
@@ -219,6 +221,7 @@ export const getUserPermissions = async (req, res, next) => {
           acc[curr.parent_menu_id].submenus[curr.submenu_id] = {
             submenu: curr.submenu,
             sequence_number: curr.submenu_sequence,
+            // mobile_path: curr.mob_path,
             operations: [],
           };
         }
@@ -331,8 +334,9 @@ export const updatePermission = async (req, res, next) => {
 export const getMenuOperations = async (req, res, next) => {
   let knex = null;
   try {
+    const { dbname } = req.user;
     // Create a Knex instance for database interaction
-    knex = await createKnexInstance();
+    knex = await createKnexInstance(dbname);
 
     // Fetch menu-operation mappings
     const menuOperations = await knex("tbl_menu_operations as mo")
@@ -387,8 +391,9 @@ const processMenuOperations = (menuOperations) => {
 export const getPermissionsList = async (req, res, next) => {
   let knex = null;
   try {
+    const { dbname } = req.user;
     // Create a Knex instance for database interaction
-    knex = await createKnexInstance();
+    knex = await createKnexInstance(dbname);
 
     // Fetch all permission sets
     const permissions = await knex("tbl_permissions").select(
@@ -472,8 +477,9 @@ export const getPermissionsList = async (req, res, next) => {
 export const getAllUserList = async (req, res, next) => {
   let knex = null;
   try {
+    const { dbname } = req.user;
     // Create a Knex instance for database interaction
-    knex = await createKnexInstance();
+    knex = await createKnexInstance(dbname);
 
     // Fetch all users sets
     const usersList = await knex("employees").select(
