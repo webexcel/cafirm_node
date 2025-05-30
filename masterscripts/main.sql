@@ -319,3 +319,12 @@ ADD COLUMN `granted_at` TIMESTAMP NULL DEFAULT NULL AFTER `granted_by`;
 
 ALTER TABLE `ca_firm`.`tbl_permissions` 
 AUTO_INCREMENT = 3 ;
+
+ALTER TABLE `ca_firm`.`tbl_menus` 
+ADD COLUMN `mob_path` VARCHAR(255) NULL DEFAULT '' AFTER `menu_name`;
+
+ALTER TABLE `ca_firm`.`attendance` 
+ADD COLUMN `login_latitude` VARCHAR(45) NULL DEFAULT NULL AFTER `total_time`,
+ADD COLUMN `login_longitude` VARCHAR(45) NULL DEFAULT NULL AFTER `login_latitude`,
+ADD COLUMN `logout_latitude` VARCHAR(45) NULL DEFAULT NULL AFTER `login_longitude`,
+ADD COLUMN `logout_longitude` VARCHAR(45) NULL DEFAULT NULL AFTER `logout_latitude`;

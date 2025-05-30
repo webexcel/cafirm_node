@@ -15,9 +15,11 @@ export const getAttendance = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
+    let attDate = date.includes("T") ? date.split("T")[0] : date;
+
     const getAttendanceRes = await knex('attendance')
       .select('employee_id', knex.raw("DATE_FORMAT(login_date, '%Y-%m-%d') as login_date"), 'login_time', knex.raw("DATE_FORMAT(logout_date, '%Y-%m-%d') as logout_date"), 'logout_time', 'total_minutes', 'total_time')
-      .whereRaw("DATE(created_at) = ?", [date]);
+      .whereRaw("DATE(created_at) = ?", [attDate]);
 
     if (getAttendanceRes) {
       logger.info("Attendance List retrieved successfully", {
@@ -56,7 +58,7 @@ export const getAttendance = async (req, res, next) => {
 export const loginAttendance = async (req, res, next) => {
   let knex = null;
   try {
-    const { emp_id, start_time, start_date } = req.body;
+    const { emp_id, start_time, start_date, latitude, longitude } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Attendance Request Received", {
@@ -81,7 +83,9 @@ export const loginAttendance = async (req, res, next) => {
       .insert({
         employee_id: emp_id,
         login_date: knex.raw('?', [start_date]),
-        login_time: knex.raw('?', [start_time])
+        login_time: knex.raw('?', [start_time]),
+        login_latitude: latitude,
+        login_longitude: longitude
       });
 
     if (insertAttResult) {
@@ -117,7 +121,7 @@ export const loginAttendance = async (req, res, next) => {
 export const logoutAttendance = async (req, res, next) => {
   let knex = null;
   try {
-    const { att_id, logout_date, logout_time } = req.body;
+    const { att_id, logout_date, logout_time, latitude, longitude } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Update Attendance Request Received", {
@@ -168,7 +172,9 @@ export const logoutAttendance = async (req, res, next) => {
         logout_date: logout_date,
         logout_time: logout_time,
         total_minutes: totalMinutes,
-        total_time: formattedTime
+        total_time: formattedTime,
+        logout_latitude: latitude,
+        logout_longitude: longitude
       }).where("attendance_id", att_id);
 
     if (updateAttResult) {
@@ -213,6 +219,9 @@ export const getAttendanceByDate = async (req, res, next) => {
 
     knex = await createKnexInstance(dbname);
 
+    let startDate = start_date.includes("T") ? start_date.split("T")[0] : start_date;
+    let endDate = end_date.includes("T") ? end_date.split("T")[0] : end_date;
+
     const query = knex('attendance')
       .select(
         'employee_id',
@@ -235,8 +244,8 @@ export const getAttendanceByDate = async (req, res, next) => {
     if (emp_id) {
       query.where("employee_id", emp_id);
 
-      if (start_date != "" && end_date != "") {
-        query.whereRaw("DATE(created_at) BETWEEN ? AND ?", [start_date, end_date]);
+      if (startDate != "" && endDate != "") {
+        query.whereRaw("DATE(created_at) BETWEEN ? AND ?", [startDate, endDate]);
       } else {
         query.whereRaw("DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
       }
@@ -381,6 +390,84 @@ export const checkTodayAttendance = async (req, res, next) => {
       error: err.message,
       username: req.user?.user_name,
       reqdetails: "attendance-checkTodayAttendance",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
+
+export const mobTimerData = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { emp_id } = req.body;
+    const { dbname, user_name } = req.user;
+
+    logger.info("Get Today Attendance Timer Data Request Received", {
+      username: user_name,
+      reqdetails: "attendance-mobTimerData",
+    });
+
+    if (!emp_id) {
+      logger.error("Employee ID Mandatory fields are missing", {
+        username: user_name,
+        reqdetails: "attendance-mobTimerData",
+      });
+      return res.status(400).json({
+        message: "Employee ID Mandatory field are missing",
+        status: false,
+      });
+    }
+
+    knex = await createKnexInstance(dbname);
+
+    const result = await knex('attendance')
+      .where({ 'employee_id': emp_id, 'status': "0" })
+      .andWhereRaw('login_date = CURRENT_DATE')
+      .sum({
+        total_seconds: knex.raw(`
+      CASE 
+        WHEN logout_date IS NOT NULL AND logout_time IS NOT NULL 
+          THEN TIMESTAMPDIFF(SECOND, login_time, logout_time)
+        ELSE TIMESTAMPDIFF(SECOND, login_time, CURRENT_TIME)
+      END
+    `)
+      });
+
+    const runningTimer = await knex('attendance').select("attendance_id")
+      .where({ 'employee_id': emp_id, 'status': "0" })
+      .andWhereRaw('login_date = CURRENT_DATE')
+      .whereNull('logout_date');
+
+    if (result) {
+      logger.info("Today Attendance Timer Data retrieved successfully", {
+        username: user_name,
+        reqdetails: "attendance-mobTimerData",
+      });
+      return res.status(200).json({
+        message: "Today Attendance Timer Data retrieved successfully",
+        data: result[0].total_seconds,
+        timerStatus: runningTimer.length > 0 ? true : false,
+        id: runningTimer.length > 0 ? runningTimer[0].attendance_id : null,
+        status: true,
+      });
+    } else {
+      logger.warn("No Today Attendance Timer Data found", {
+        username: user_name,
+        reqdetails: "attendance-mobTimerData",
+      });
+      return res.status(404).json({
+        message: "No Today Attendance Timer Data found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching Today Attendance Timer Data", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "attendance-mobTimerData",
     });
     next(err);
   } finally {
