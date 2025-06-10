@@ -91,7 +91,7 @@ export const getDocuments = async (req, res, next) => {
 export const addDocument = async (req, res, next) => {
     let knex = null;
     try {
-        const { client_id, description, doc_base } = req.body;
+        const { client_id, description, doc_base, type_id } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Document Request Received", {
@@ -120,7 +120,7 @@ export const addDocument = async (req, res, next) => {
         const fileName = `client_${id}_${Date.now()}.png`;
         const filePath = path.join(uploadDir, fileName);
 
-        const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
+        const base64Data = doc_base.replace(/^data:image\/\w+;base64,/, "");
 
         const buffer = Buffer.from(base64Data, 'base64');
         fs.writeFileSync(filePath, buffer);
@@ -131,7 +131,8 @@ export const addDocument = async (req, res, next) => {
             .insert({
                 client_id: client_id,
                 description: description,
-                start_date: fileUrl
+                start_date: fileUrl,
+                type_id: type_id,
             });
 
         if (insertDocRes) {

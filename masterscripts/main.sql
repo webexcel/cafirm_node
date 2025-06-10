@@ -352,3 +352,10 @@ INSERT INTO documents (client_id, type, doc_url, description) VALUES
 (4, 'personal', 'https://example.com/docs/specs_104.pdf', 'Product specifications - client 104'),
 (2, 'office', 'https://example.com/docs/specs_104.pdf', 'example'),
 (1, 'official', 'https://example.com/docs/specs_104.pdf', 'fvcdvfdg fvevdvsd');
+
+CREATE TABLE `ca_firm`.`document_type` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `status` ENUM('0', '1') NOT NULL DEFAULT '0',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`));
