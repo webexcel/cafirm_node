@@ -2,6 +2,7 @@ import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 import fs from "fs";
 import path from "path";
+import mime from "mime-types";
 
 export const getDocuments = async (req, res, next) => {
     let knex = null;
@@ -233,7 +234,7 @@ export const deleteDocument = async (req, res, next) => {
         if (!document_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
-                reqdetails: "attendance-loginAttendance",
+                reqdetails: "documentManagement-deleteDocument",
             });
             return res.status(400).json({
                 message: "Mandatory fields are missing",
@@ -271,6 +272,100 @@ export const deleteDocument = async (req, res, next) => {
             reqdetails: "documentManagement-deleteDocument",
         });
         console.error("Error While Deleting Document:", err);
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const downloadDocument = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { document_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Document Data Request Received", {
+            username: user_name,
+            reqdetails: "documentManagement-downloadDocument",
+        });
+
+        if (!document_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "documentManagement-downloadDocument",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const getDocRes = await knex('documents').where({ 'status': '0', 'id': document_id }).select('*').first();
+        if (!getDocRes) {
+            logger.error("Document Not Found", {
+                username: user_name,
+                reqdetails: "documentManagement-downloadDocument",
+            });
+            return res.status(404).json({
+                message: "Document Not Found",
+                status: false,
+            });
+        }
+
+        const filePath = path.join(process.env.Folder_Path, getDocRes.doc_url.replace(process.env.File_Path, ''));
+        if (!fs.existsSync(filePath)) {
+            logger.error("File Not Found on Server", {
+                username: user_name,
+                reqdetails: "documentManagement-downloadDocument",
+            });
+            return res.status(404).json({
+                message: "File Not Found on Server",
+                status: false,
+            });
+        }
+        const fileBuffer = fs.readFileSync(filePath);
+        if (!fileBuffer || fileBuffer.length === 0) {
+            logger.error("File is empty or not readable", {
+                username: user_name,
+                reqdetails: "documentManagement-downloadDocument",
+            });
+            return res.status(500).json({
+                message: "File is empty or not readable",
+                status: false,
+            });
+        }
+
+        const base64Data = fileBuffer.toString('base64');
+        const mimeType = mime.lookup(filePath) || 'application/octet-stream';
+        const base64WithMime = `data:${mimeType};base64,${base64Data}`;
+
+        res.setHeader('Content-Disposition', `attachment; filename="${getDocRes.doc_name}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Length', fileBuffer.length);
+
+        logger.info("Document Fetched Successfully", {
+            username: user_name,
+            reqdetails: "documentManagement-downloadDocument",
+        });
+
+        return res.status(200).json({
+            message: "Document Data Fetched Successfully",
+            status: true,
+            file_base64: base64WithMime,
+            file_name: getDocRes.doc_name,
+            // file_byte: fileBuffer,
+        });
+    } catch (err) {
+        logger.error("Error While Fetchnig Document", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "documentManagement-downloadDocument",
+        });
+        console.error("Error While Fetchnig Document:", err);
         next(err);
     } finally {
         if (knex) {
