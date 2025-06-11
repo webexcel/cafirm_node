@@ -1,5 +1,7 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
+import fs from "fs";
+import path from "path";
 
 export const getDocuments = async (req, res, next) => {
     let knex = null;
@@ -19,14 +21,24 @@ export const getDocuments = async (req, res, next) => {
             .orderBy('created_at', 'desc');
 
         const clientIds = [...new Set(getDocRes.map(doc => doc.client_id))];
+        const typeIds = [...new Set(getDocRes.map(doc => doc.type))];
 
         const clients = await knex('clients')
             .select('client_id', 'client_name')
             .whereIn('client_id', clientIds);
 
+        const documentTypes = await knex('document_type')
+            .select('id', 'type_name')
+            .whereIn('id', typeIds);
+
         const clientMap = {};
         clients.forEach(client => {
             clientMap[client.client_id] = client.client_name;
+        });
+
+        const typeMap = {};
+        documentTypes.forEach(type => {
+            typeMap[type.id] = type.type_name;
         });
 
         const groupedByClient = {};
@@ -45,7 +57,11 @@ export const getDocuments = async (req, res, next) => {
 
             let typeGroup = groupedByClient[client_id].childs.find(child => child.type === type);
             if (!typeGroup) {
-                typeGroup = { type, documents: [] };
+                typeGroup = {
+                    type: type,
+                    type_name: typeMap[type] || null,
+                    documents: []
+                };
                 groupedByClient[client_id].childs.push(typeGroup);
             }
 
@@ -91,7 +107,7 @@ export const getDocuments = async (req, res, next) => {
 export const addDocument = async (req, res, next) => {
     let knex = null;
     try {
-        const { client_id, description, doc_base, type_id } = req.body;
+        const { client_id, description, doc_base, type_id, doc_name } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Document Request Received", {
@@ -99,7 +115,7 @@ export const addDocument = async (req, res, next) => {
             reqdetails: "documentManagement-addDocument",
         });
 
-        if (!client_id || !doc_base) {
+        if (!client_id || !doc_base || !type_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "documentManagement-addDocument",
@@ -112,27 +128,66 @@ export const addDocument = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const uploadDir = process.env.Folder_Path + "\\profiles";
+        const matches = doc_base.match(/^data:([^;]+);base64,(.+)$/);
+        if (!matches) {
+            throw new Error("Invalid base64 format");
+        }
+
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+
+        const allowedMimeTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'application/pdf',
+            'application/msword',            // .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            'application/vnd.ms-excel',      // .xls
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'text/plain'                     // .txt
+        ];
+        if (!allowedMimeTypes.includes(mimeType)) {
+            logger.info("Unsupported MIME type", {
+                username: user_name,
+                reqdetails: "documentManagement-addDocument",
+            });
+            return res.status(500).json({
+                message: "Unsupported MIME type",
+                error: `Unsupported MIME type: ${mimeType}`,
+                status: false,
+            });
+        }
+
+        const clients = await knex('clients')
+            .select('client_name')
+            .where('client_id', client_id).first();
+
+        const documentTypes = await knex('document_type')
+            .select('type_name')
+            .where('id', type_id).first();
+
+        const uploadDir = `${process.env.Folder_Path}/profiles/documents/${clients.client_name.replaceAll(' ', '')}/${documentTypes.type_name.replaceAll(' ', '')}`;
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        const fileName = `client_${id}_${Date.now()}.png`;
+        const fileName = doc_name || `${documentTypes.type_name}_${Date.now()}.${fileExt}`;
         const filePath = path.join(uploadDir, fileName);
-
-        const base64Data = doc_base.replace(/^data:image\/\w+;base64,/, "");
 
         const buffer = Buffer.from(base64Data, 'base64');
         fs.writeFileSync(filePath, buffer);
 
-        const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
+        const fileUrl = `${process.env.File_Path}/profiles/documents/${clients.client_name.replaceAll(' ', '')}/${documentTypes.type_name.replaceAll(' ', '')}/${fileName}`;
 
         const insertDocRes = await knex('documents')
             .insert({
                 client_id: client_id,
                 description: description,
-                start_date: fileUrl,
-                type_id: type_id,
+                doc_url: fileUrl,
+                type: type_id,
+                doc_name: fileName
             });
 
         if (insertDocRes) {

@@ -455,8 +455,7 @@ export const getEmployeeReport = async (req, res, next) => {
             .whereNotIn('t.status', ['3'])
             // .andWhere('t.status', '2')
             .andWhere(function () {
-                this.where('t.assigned_date', '<=', endDate)
-                    .andWhere('t.due_date', '>=', startDate);
+                this.whereBetween('t.assigned_date', [startDate, endDate]);
             })
             .groupBy('t.task_id', 't.task_name')
             .orderBy('t.created_at', 'desc');
@@ -466,8 +465,7 @@ export const getEmployeeReport = async (req, res, next) => {
             .where('etm.employee_id', emp_id)
             .andWhereNot('t.status', '3')
             .andWhere(function () {
-                this.where('t.assigned_date', '<=', endDate)
-                    .andWhere('t.due_date', '>=', startDate);
+                this.whereBetween('t.assigned_date', [startDate, endDate]);
             })
             .select([
                 knex.raw('COUNT(*) as total_tasks'),
@@ -929,8 +927,7 @@ export const getClientReport = async (req, res, next) => {
             // .andWhere('t.status', '2')
             .andWhere('t.client_id', client_id)
             .andWhere(function () {
-                this.where('t.assigned_date', '<=', endDate)
-                    .andWhere('t.due_date', '>=', startDate);
+                this.whereBetween('t.assigned_date', [startDate, endDate]);
             })
             .groupBy('t.task_id', 't.task_name')
             .orderBy('t.created_at', 'desc');
@@ -939,8 +936,7 @@ export const getClientReport = async (req, res, next) => {
             .where('t.client_id', client_id)
             .andWhereNot('t.status', '3')
             .andWhere(function () {
-                this.where('t.assigned_date', '<=', endDate)
-                    .andWhere('t.due_date', '>=', startDate);
+                this.whereBetween('t.assigned_date', [startDate, endDate]);
             })
             .select([
                 knex.raw('COUNT(*) as total_tasks'),
@@ -1014,6 +1010,140 @@ export const getClientReport = async (req, res, next) => {
             username: req.user?.user_name,
             reqdetails: "charts-getClientReport",
         });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getTaskByEmployeeId = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { emp_id, task_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Timesheet Request Received", {
+            username: user_name,
+            reqdetails: "charts-getTaskByEmployeeId",
+        });
+
+        if (!emp_id || !task_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "charts-getTaskByEmployeeId",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const getTaskByEmployeeIdRes = await knex("time_sheets").select('*').where({ employee_id: emp_id, task_id: task_id });
+
+        for (const taskList of getTaskByEmployeeIdRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: taskList.task_id }).first();
+            taskList["task_name"] = taskName?.task_name || null;
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: taskList.employee_id }).first();
+            taskList["employee_name"] = employee?.name || null;
+        }
+
+        if (getTaskByEmployeeIdRes) {
+            logger.info("Timesheet fetched successfully", {
+                username: user_name,
+                reqdetails: "charts-getTaskByEmployeeId",
+            });
+            return res.status(200).json({
+                message: "Timesheet fetched successfully",
+                status: true,
+                data: getTaskByEmployeeIdRes
+            });
+        } else {
+            logger.error("Timesheet fetch failed", {
+                username: user_name,
+                reqdetails: "charts-getTaskByEmployeeId",
+            });
+            return res.status(404).json({
+                message: "Timesheet fetch failed",
+                status: false,
+            });
+        }
+    } catch (err) {
+        console.error("Error fetching Timesheet:", err);
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getTaskByTaskId = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { task_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Timesheet Request Received", {
+            username: user_name,
+            reqdetails: "charts-getTaskByTaskId",
+        });
+
+        if (!task_id) {
+            logger.error("Mandatory fields are missing", {
+                username: user_name,
+                reqdetails: "charts-getTaskByTaskId",
+            });
+            return res.status(400).json({
+                message: "Mandatory fields are missing",
+                status: false,
+            });
+        }
+
+        knex = await createKnexInstance(dbname);
+
+        const getTaskByTaskIdRes = await knex("time_sheets").select('*').where({ task_id: task_id });
+
+         for (const taskList of getTaskByTaskIdRes) {
+            const taskName = await knex("tasks")
+                .select("*")
+                .where({ task_id: taskList.task_id }).first();
+            taskList["task_name"] = taskName?.task_name || null;
+            const employee = await knex("employees")
+                .select("name")
+                .where({ employee_id: taskList.employee_id }).first();
+            taskList["employee_name"] = employee?.name || null;
+        }
+
+        if (getTaskByTaskIdRes) {
+            logger.info("Timesheet fetched successfully", {
+                username: user_name,
+                reqdetails: "charts-getTaskByTaskId",
+            });
+            return res.status(200).json({
+                message: "Timesheet fetched successfully",
+                status: true,
+                data: getTaskByTaskIdRes
+            });
+        } else {
+            logger.error("Timesheet fetch failed", {
+                username: user_name,
+                reqdetails: "charts-getTaskByTaskId",
+            });
+            return res.status(404).json({
+                message: "Timesheet fetch failed",
+                status: false,
+            });
+        }
+    } catch (err) {
+        console.error("Error fetching Timesheet:", err);
         next(err);
     } finally {
         if (knex) {
