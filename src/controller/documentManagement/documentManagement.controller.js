@@ -44,7 +44,7 @@ export const getDocuments = async (req, res, next) => {
         const groupedByClient = {};
 
         getDocRes.forEach(doc => {
-            const { client_id, type, doc_url, description } = doc;
+            const { id, doc_name, client_id, type, doc_url, description } = doc;
 
             if (!groupedByClient[client_id]) {
                 groupedByClient[client_id] = {
@@ -65,7 +65,7 @@ export const getDocuments = async (req, res, next) => {
                 groupedByClient[client_id].childs.push(typeGroup);
             }
 
-            typeGroup.documents.push({ doc_url, description });
+            typeGroup.documents.push({ id, doc_name, doc_url, description });
         });
 
         const finalResult = Object.values(groupedByClient);
