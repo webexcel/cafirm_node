@@ -54,7 +54,7 @@ export const getClients = async (req, res, next) => {
 export const addClient = async (req, res, next) => {
   let knex = null;
   try {
-    const { name, dis_name, type, cont_person, mail, phone, address, city, state, country, pin, gst_num, pan_num, tan_num, incop_date, fin_start, fin_end } = req.body;
+    const { name, dis_name, type, cont_person, mail, phone, address, city, state, country, pin, gst_num, pan_num, tan_num, incop_date, fin_start, fin_end, it_password } = req.body;
     const { dbname, user_name } = req.user;
 
     logger.info("Add Client Request Received", {
@@ -114,7 +114,8 @@ export const addClient = async (req, res, next) => {
       tan_number: tan_num,
       incorporation_date: incop_date,
       financial_year_start: fin_start,
-      financial_year_end: fin_end
+      financial_year_end: fin_end,
+      it_password: it_password,
     });
 
     if (insertClientResult) {
