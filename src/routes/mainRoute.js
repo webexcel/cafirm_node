@@ -15,6 +15,8 @@ import calendarRoutes from "./calendar/calendar.route.js";
 import menuRoutes from "./configuration/menu.route.js";
 import leaveRequestRoutes from "./leaveRequest/leaveRequest.route.js";
 import chartRoutes from "./report/charts.route.js";
+import documentManagementRoutes from "./documentManagement/documentManagement.route.js";
+import docTypeRoutes from "./master/docType.route.js";
 
 const mainRoutes = express.Router();
 
@@ -49,5 +51,9 @@ mainRoutes.use("/menu", menuRoutes);
 mainRoutes.use("/leaverequest", leaveRequestRoutes);
 
 mainRoutes.use("/charts", chartRoutes);
+
+mainRoutes.use("/document", documentManagementRoutes);
+
+mainRoutes.use("/master/documenttype", docTypeRoutes);
 
 export default mainRoutes;

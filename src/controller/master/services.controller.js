@@ -83,7 +83,7 @@ export const addService = async (req, res, next) => {
     if (existingService) {
       logger.error("Duplicates in Service Entry", {
         username: user_name,
-        reqdetails: "client-addClient",
+        reqdetails: "master-addClient",
       });
       return res.status(500).json({
         message: "Duplicates in Service Entry for Service_Name",
@@ -138,7 +138,7 @@ export const editService = async (req, res, next) => {
     });
 
     if (!id || !service_name || !short_name) {
-      logger.error("Mandatory fields are missing for Edit Employee", {
+      logger.error("Mandatory fields are missing for Edit Service", {
         username: user_name,
         reqdetails: "master-editService",
       });

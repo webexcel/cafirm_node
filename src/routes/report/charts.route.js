@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
 import { getClients, getYearlyEmployeeReport, getMonthlyEmployeeReport, getWeeklyEmployeeReport, getEmployeeReport,
-    getYearlyClientReport, getMonthlyClientReport, getWeeklyClientReport, getClientReport } from "../../controller/report/charts.controller.js";
+    getYearlyClientReport, getMonthlyClientReport, getWeeklyClientReport, getClientReport, getTaskByEmployeeId, getTaskByTaskId } from "../../controller/report/charts.controller.js";
 
 const chartRoutes = express.Router();
 
@@ -24,5 +24,9 @@ chartRoutes.post("/getMonthlyClientReport", getMonthlyClientReport);
 chartRoutes.post("/getWeeklyClientReport", getWeeklyClientReport);
 
 chartRoutes.post("/getClientReport", getClientReport);
+
+chartRoutes.post("/getTaskByEmployeeId", getTaskByEmployeeId);
+
+chartRoutes.post("/getTaskByTaskId", getTaskByTaskId);
 
 export default chartRoutes;

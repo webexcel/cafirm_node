@@ -328,3 +328,37 @@ ADD COLUMN `login_latitude` VARCHAR(45) NULL DEFAULT NULL AFTER `total_time`,
 ADD COLUMN `login_longitude` VARCHAR(45) NULL DEFAULT NULL AFTER `login_latitude`,
 ADD COLUMN `logout_latitude` VARCHAR(45) NULL DEFAULT NULL AFTER `login_longitude`,
 ADD COLUMN `logout_longitude` VARCHAR(45) NULL DEFAULT NULL AFTER `logout_latitude`;
+
+
+----------------------10-06-2025----------------------
+CREATE TABLE ca_firm.documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    doc_url VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('0', '1') DEFAULT '0'
+);
+
+ALTER TABLE `ca_firm`.`documents` 
+ADD COLUMN `type` VARCHAR(100) NOT NULL AFTER `client_id`;
+
+INSERT INTO documents (client_id, type, doc_url, description) VALUES
+(1, 'personal', 'https://example.com/docs/contract_101.pdf', 'Signed contract for client 101'),
+(2, 'office', 'https://example.com/docs/invoice_102.pdf', 'Invoice for March'),
+(3, 'personal', 'https://example.com/docs/report_103.pdf', 'Annual report for client 103'),
+(1, 'official', 'https://example.com/docs/nda_101.pdf', 'NDA agreement - client 101'),
+(4, 'personal', 'https://example.com/docs/specs_104.pdf', 'Product specifications - client 104'),
+(2, 'office', 'https://example.com/docs/specs_104.pdf', 'example'),
+(1, 'official', 'https://example.com/docs/specs_104.pdf', 'fvcdvfdg fvevdvsd');
+
+CREATE TABLE `ca_firm`.`document_type` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `status` ENUM('0', '1') NOT NULL DEFAULT '0',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`));
+
+ALTER TABLE `ca_firm`.`documents` 
+ADD COLUMN `doc_name` VARCHAR(255) NOT NULL AFTER `type`;
