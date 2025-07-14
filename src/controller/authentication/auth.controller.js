@@ -5,7 +5,7 @@ import { logger } from "../../../configs/winston.js";
 import message from "../../../constants/messages.js";
 import errorStatus from "../../../constants/responseCode.js";
 import bcrypt from 'bcrypt';
-import sendEmail from "../../utills/sendEmail.js";
+import sendEmail from "../../utills/SendEmail.js";
 
 export const login = async (req, res, next) => {
   try {
