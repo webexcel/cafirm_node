@@ -3,6 +3,7 @@ import { logger } from "../../../configs/winston.js";
 import bcrypt from 'bcrypt';
 import fs from 'fs';
 import path from 'path';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const getEmployees = async (req, res, next) => {
   let knex = null;
@@ -252,21 +253,56 @@ export const editEmployee = async (req, res, next) => {
 
     let updateResult;
 
-    if (key == "photo") {
-      const uploadDir = process.env.Folder_Path + "\\profiles";
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
+    if (key == "photo" && value.startsWith('data:image/')) {
+      // const uploadDir = process.env.Folder_Path + "\\profiles";
+      // if (!fs.existsSync(uploadDir)) {
+      //   fs.mkdirSync(uploadDir, { recursive: true });
+      // }
 
-      const fileName = `employee_${id}_${Date.now()}.png`;
-      const filePath = path.join(uploadDir, fileName);
+      // const fileName = `employee_${id}_${Date.now()}.png`;
+      // const filePath = path.join(uploadDir, fileName);
+
+      // const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
+
+      // const buffer = Buffer.from(base64Data, 'base64');
+      // fs.writeFileSync(filePath, buffer);
+
+      // const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
+
+      const s3 = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
+      });
 
       const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
-
       const buffer = Buffer.from(base64Data, 'base64');
-      fs.writeFileSync(filePath, buffer);
 
-      const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
+      const matches = value.match(/^data:(image\/\w+);base64,/);
+      const mimeType = matches ? matches[1] : null;
+
+      let extension = 'png';
+      if (mimeType) {
+        extension = mimeType.split('/')[1];
+      }
+
+      const fileName = `employee_${id}_${Date.now()}.${extension}`;
+      const s3Key = `cafirm/employee/${fileName}`;
+
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: s3Key,
+        Body: buffer,
+        ContentEncoding: 'base64',
+        ContentType: `image/${extension}`,
+        ACL: 'public-read'
+      };
+
+      await s3.send(new PutObjectCommand(uploadParams));
+
+      const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
 
       updateResult = await knex("employees").update({ [key]: fileUrl }).where({ employee_id: id });
     } else {
