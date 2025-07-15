@@ -1,17 +1,24 @@
 import express, { json } from "express";
-import 'dotenv/config'
 import cors from "cors";
 import compression from 'compression';
 import mainRoutes from "./src/routes/mainRoute.js";
 import { logger } from "./configs/winston.js";
 import { HttpError } from "./src/models/http-error.js";
 import path from 'path';
+import dotenv from "dotenv";
+dotenv.config();
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT || 3000;
 
 const profilesDir = path.resolve(process.env.Folder_Path + "\\profiles");
 
 const app = express();
+
+// const allowedOrigins = [
+//   'http://cafirm.webexcel.in',
+//   'https://cafirm.webexcel.in',
+// 'http://localhost:5173',
+// ];
 
 //profile images
 app.use('/profiles', express.static(profilesDir));
