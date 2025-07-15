@@ -292,7 +292,7 @@ export const editEmployee = async (req, res, next) => {
       const s3Key = `cafirm/employee/${fileName}`;
 
       const uploadParams = {
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: process.env.AWS_BUCKET_NAME,
         Key: s3Key,
         Body: buffer,
         ContentEncoding: 'base64',
@@ -302,7 +302,7 @@ export const editEmployee = async (req, res, next) => {
 
       await s3.send(new PutObjectCommand(uploadParams));
 
-      const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+      const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
 
       updateResult = await knex("employees").update({ [key]: fileUrl }).where({ employee_id: id });
     } else {
