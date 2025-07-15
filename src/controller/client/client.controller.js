@@ -210,7 +210,7 @@ export const editClient = async (req, res, next) => {
       }
 
       const fileName = `client_${id}_${Date.now()}.${extension}`;
-      const s3Key = `cafirm/profiles/${fileName}`;
+      const s3Key = `cafirm/client/${fileName}`;
 
       const uploadParams = {
         Bucket: process.env.AWS_BUCKET_NAME,
