@@ -33,19 +33,21 @@ export const getTasksByType = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let query = knex('tasks')
-            .select('tasks.*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(duedate, '%Y-%m-%d') as due_date"))
+            .select('tasks.*', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            })
             .orderByRaw("FIELD(tasks.priority, 'Critical', 'High', 'Medium', 'Low')");
-
+        
         if (statusMap[showType] !== null && statusMap[showType] !== undefined) {
             query = query.where('tasks.status', statusMap[showType]);
         } else {
             query = query.whereIn('tasks.status', ['0', '1', '2']);
         }
-
         if (client_id && client_id.toString().toLowerCase() != "all") {
             query = query.where('tasks.client_id', client_id);
         }
-
         if (employee_id && employee_id.toString().toLowerCase() != "all") {
             query = query
                 .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
@@ -54,7 +56,6 @@ export const getTasksByType = async (req, res, next) => {
         }
 
         const getTaskRes = await query;
-
 
         for (const task of getTaskRes) {
             const mappedData = await knex("employee_task_mapping")
@@ -83,7 +84,7 @@ export const getTasksByType = async (req, res, next) => {
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
-
+        console.log(16);
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
                 username: user_name,
@@ -131,11 +132,15 @@ export const getTasksByPriority = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let getTaskRes = await knex('tasks')
-            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"))
+            .select('tasks.*', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            })
             // .where('due_date', '>', new Date())
-            .whereRaw("DATE(CONVERT_TZ(due_date, '+00:00', '+05:30')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+00:00'))")
-            .orderByRaw("FIELD(priority, 'Critical', 'High', 'Medium', 'Low')")
-            .orderBy('due_date', 'asc')
+            .whereRaw("DATE(CONVERT_TZ(tasks.due_date, '+00:00', '+05:30')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+00:00'))")
+            .orderByRaw("FIELD(tasks.priority, 'Critical', 'High', 'Medium', 'Low')")
+            .orderBy('tasks.due_date', 'asc')
             .limit(5);
 
         for (const task of getTaskRes) {
@@ -605,7 +610,7 @@ export const getViewTasks = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let query = knex('tasks')
-            .select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .select("tasks.*", knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
             .leftJoin('partners', function () {
                 this.on('tasks.partner_id', '=', 'partners.id')
                     .andOnNotNull('tasks.partner_id');
@@ -749,12 +754,12 @@ export const getLatestTasks = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let getTaskRes = await knex('tasks')
-            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .select('tasks.*', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
             .leftJoin('partners', function () {
                 this.on('tasks.partner_id', '=', 'partners.id')
                     .andOnNotNull('tasks.partner_id');
             })
-            .orderBy('created_at', 'desc')
+            .orderBy('tasks.created_at', 'desc')
             .limit(5);
 
         for (const task of getTaskRes) {
