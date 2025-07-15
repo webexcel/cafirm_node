@@ -278,7 +278,7 @@ export const getServicesForTask = async (req, res, next) => {
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { client, name, service, assignTo, assignDate, dueDate, priority, description } = req.body;
+        const { client, name, service, assignTo, assignDate, dueDate, priority, description, partnerId } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Task Request Received", {
@@ -328,7 +328,8 @@ export const addTask = async (req, res, next) => {
             assigned_date: startDate,
             due_date: endDate,
             priority: priority,
-            description: description
+            description: description,
+            partner_id: partnerId
         });
 
         if (insertTaskResult) {
@@ -385,7 +386,7 @@ export const addTask = async (req, res, next) => {
 export const editTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description, status } = req.body;
+        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description, status, partnerId } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Task Request Received", {
@@ -414,7 +415,8 @@ export const editTask = async (req, res, next) => {
             due_date: endDate,
             priority: priority,
             description: description,
-            status: status
+            status: status,
+            partner_id: partnerId
         }).where({ task_id: task_id });
 
         const existingMappings = await knex("employee_task_mapping")
@@ -602,7 +604,12 @@ export const getViewTasks = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        let query = knex('tasks').select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"));
+        let query = knex('tasks')
+            .select("*", knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            });
 
         if (client_id && client_id.toString().toLowerCase() != "all") {
             query = query.where('tasks.client_id', client_id);
@@ -641,7 +648,7 @@ export const getViewTasks = async (req, res, next) => {
                                 .select("name", "photo")
                                 .where({ employee_id: emp_id })
                                 .first();
-    
+
                             return { emp_id: emp_id, emp_name: employee?.name, photo: employee?.photo || null };
                         })
                     );
@@ -742,7 +749,11 @@ export const getLatestTasks = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         let getTaskRes = await knex('tasks')
-            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"))
+            .select('*', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            })
             .orderBy('created_at', 'desc')
             .limit(5);
 
@@ -805,6 +816,56 @@ export const getLatestTasks = async (req, res, next) => {
             error: err.message,
             username: req.user?.user_name,
             reqdetails: "task-getLatestTasks",
+        });
+        next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getPartners = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Partners List Request Received", {
+            username: user_name,
+            reqdetails: "task-getPartners",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        const getPartnersResult = await knex('partners')
+            .select('*')
+            .where('status', '0');
+
+        if (getPartnersResult) {
+            logger.info("Partners List retrieved successfully", {
+                username: user_name,
+                reqdetails: "task-getPartners",
+            });
+            return res.status(200).json({
+                message: "Partners List retrieved successfully",
+                data: getPartnersResult,
+                status: true,
+            });
+        } else {
+            logger.warn("No Partners Details found", {
+                username: user_name,
+                reqdetails: "task-getPartners",
+            });
+            return res.status(404).json({
+                message: "No Partners Details found",
+                status: false,
+            });
+        }
+    } catch (err) {
+        logger.error("Error fetching Partners List", {
+            error: err.message,
+            username: req.user?.user_name,
+            reqdetails: "task-getPartners",
         });
         next(err);
     } finally {

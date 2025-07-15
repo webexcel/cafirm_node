@@ -281,7 +281,12 @@ export const getTaskList = async (req, res, next) => {
 
         const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
-        let query = knex('tasks').select('task_id', 'task_name', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date")).andWhereNot('status', '3')
+        let query = knex('tasks').select('task_id', 'task_name', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            })
+            .andWhereNot('status', '3')
             .andWhere(function () {
                 this.where('assigned_date', '<=', today)
                     .andWhere('due_date', '>=', today);
@@ -672,9 +677,14 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
                 'tasks.description',
                 'tasks.service',
                 knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"),
-                knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date")
+                knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"),
+                'partners.name as partner_name'
             )
             .join('employee_task_mapping', 'tasks.task_id', 'employee_task_mapping.task_id')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            })
             .where(function () {
                 // this.whereRaw("WEEK(tasks.assigned_date, 0) = WEEK(CURDATE(), 0)")
                 //     .orWhereRaw("WEEK(tasks.due_date, 0) = WEEK(CURDATE(), 0)")

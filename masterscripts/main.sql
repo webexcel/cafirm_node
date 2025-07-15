@@ -362,3 +362,12 @@ CREATE TABLE `ca_firm`.`document_type` (
 
 ALTER TABLE `ca_firm`.`documents` 
 ADD COLUMN `doc_name` VARCHAR(255) NOT NULL AFTER `type`;
+
+CREATE TABLE `ca_firm`.`partners` (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  status ENUM('0', '1') DEFAULT '0'
+);
+
+ALTER TABLE `ca_firm`.`tasks` 
+ADD COLUMN `partner_id` INT NULL DEFAULT NULL AFTER `priority`;
