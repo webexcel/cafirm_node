@@ -297,7 +297,7 @@ export const editEmployee = async (req, res, next) => {
         Body: buffer,
         ContentEncoding: 'base64',
         ContentType: `image/${extension}`,
-        ACL: 'public-read'
+        // ACL: 'public-read'
       };
 
       await s3.send(new PutObjectCommand(uploadParams));
