@@ -84,7 +84,6 @@ export const getTasksByType = async (req, res, next) => {
 
             task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
         }
-        console.log(16);
         if (getTaskRes) {
             logger.info("Tasks List retrieved successfully", {
                 username: user_name,

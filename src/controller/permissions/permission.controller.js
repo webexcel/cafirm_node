@@ -66,7 +66,7 @@ export const assignPermission = async (req, res, next) => {
   let knex = null;
   try {
     const { employee_id, permission_id } = req.body;
-    const { dbname, name } = req.user;
+    const { dbname, user_name } = req.user;
 
     if (!employee_id || !permission_id) {
       return res.status(400).json({
@@ -124,7 +124,7 @@ export const assignPermission = async (req, res, next) => {
       });
     }
 
-    logger.info(`Permission ${permission_id} assigned to User ${name}`);
+    logger.info(`Permission ${permission_id} assigned to User ${user_name}`);
     res.status(200).json({
       message: "Permission assigned successfully.",
       status: true,

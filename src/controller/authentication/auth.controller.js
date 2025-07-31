@@ -68,7 +68,7 @@ export const login = async (req, res, next) => {
       logger.info("Password updated to bcrypt hash for better security", { username: email });
     }
 
-    const token = generateAccessToken({ employee_id, email: userEmail, name, role });
+    const token = generateAccessToken({ employee_id, email: userEmail, name, role, user_name: name });
 
     return res.status(responseCode.SUCCESS).json({
       status: true,
