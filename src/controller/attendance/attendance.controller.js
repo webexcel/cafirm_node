@@ -318,7 +318,7 @@ export const checkTodayAttendance = async (req, res, next) => {
 
     let todayMinutes = 0;
     let totalSeconds = 0;
-    let totalTime;
+    let totalTime = "00:00:00";
 
     if (getAttendanceRes.length > 0) {
       for (let data of getAttendanceRes) {
@@ -343,7 +343,19 @@ export const checkTodayAttendance = async (req, res, next) => {
     if (recordsToUpdate.length > 0) {
       for (const data of recordsToUpdate) {
         const loginDateTime = moment(`${data.login_date} ${data.login_time}`, "YYYY-MM-DD HH:mm:ss");
-        const logoutDateTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
+
+        const thresholdTime = moment(`${data.login_date} 20:00:00`, "YYYY-MM-DD HH:mm:ss");
+
+        let logoutDateTime;
+        let logout_time;
+
+        if (loginDateTime.isAfter(thresholdTime)) {
+          logoutDateTime = moment(`${data.login_date} 23:59:59`, "YYYY-MM-DD HH:mm:ss");
+          logout_time = "23:59:59";
+        } else {
+          logoutDateTime = thresholdTime;
+          logout_time = "20:00:00";
+        }
 
         const totalSeconds = logoutDateTime.diff(loginDateTime, 'seconds');
         let totalMinutes = Math.floor(totalSeconds / 60);
@@ -356,7 +368,7 @@ export const checkTodayAttendance = async (req, res, next) => {
           .where("attendance_id", data.attendance_id)
           .update({
             logout_date: data.login_date,
-            logout_time: "20:00:00",
+            logout_time: logout_time,
             total_minutes: totalMinutes,
             total_time: formattedTime
           });
