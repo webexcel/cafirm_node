@@ -371,3 +371,13 @@ CREATE TABLE `ca_firm`.`partners` (
 
 ALTER TABLE `ca_firm`.`tasks` 
 ADD COLUMN `partner_id` INT NULL DEFAULT NULL AFTER `priority`;
+
+----------------02-08-2025----------------------
+CREATE TABLE `ca_firm`.`year` (
+  `id` INT NOT NULL,
+  `year` VARCHAR(100) NOT NULL,
+  `status` ENUM('0', '1') NULL DEFAULT '0',
+  PRIMARY KEY (`id`));
+
+  ALTER TABLE `ca_firm`.`year` 
+CHANGE COLUMN `id` `id` INT NOT NULL AUTO_INCREMENT ;
