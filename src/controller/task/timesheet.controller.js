@@ -307,7 +307,7 @@ export const getTaskList = async (req, res, next) => {
 
         const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
-        let query = knex('tasks').select('tasks.task_id', 'tasks.task_name', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+        let query = knex('tasks').select('tasks.task_id', 'tasks.task_name', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'tasks.year_id', 'partners.name as partner_name')
             .leftJoin('partners', function () {
                 this.on('tasks.partner_id', '=', 'partners.id')
                     .andOnNotNull('tasks.partner_id');
