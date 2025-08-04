@@ -104,7 +104,7 @@ export const getTimesheetLimited = async (req, res, next) => {
                 task["task_description"] = taskName?.description || null;
                 const year = await knex("year")
                     .select("year")
-                    .where({ id: taskName.year_id }).first();
+                    .where({ id: taskName.year_id });
                 task["year_name"] = year?.year || null;
             } else {
                 task["task_name"] = null;
@@ -123,10 +123,6 @@ export const getTimesheetLimited = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service_id }).first();
             task["service_name"] = service?.service_name || null;
-            const year = await knex("year")
-                .select("year")
-                .where({ id: task.year_id }).first();
-            task["year_name"] = year?.year || null;
         }
 
         if (getTSRes) {
