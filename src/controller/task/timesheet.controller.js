@@ -332,6 +332,10 @@ export const getTaskList = async (req, res, next) => {
         let filteredTasks = [];
 
         for (const task of getTaskRes) {
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
             const mappedEmployees = await knex("employee_task_mapping")
                 .select("employee_id")
                 .where({ task_id: task.task_id, status: '0' });
