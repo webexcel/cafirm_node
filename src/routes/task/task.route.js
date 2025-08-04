@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
 import { getTasksByType, getTasksByPriority, getServicesForTask, addTask, editTask, taskStatusUpdate, deleteTask, 
-    getViewTasks, getLatestTasks, getPartners } from "../../controller/task/task.controller.js";
+    getViewTasks, getLatestTasks, getPartners, getTasksByClient } from "../../controller/task/task.controller.js";
 
 const taskRoutes = express.Router();
 
@@ -26,5 +26,7 @@ taskRoutes.post("/getViewTasks", getViewTasks);
 taskRoutes.get("/getLatestTasks", getLatestTasks);
 
 taskRoutes.get("/getPartners", getPartners);
+
+taskRoutes.post("/getTasksByClient", getTasksByClient);
 
 export default taskRoutes;

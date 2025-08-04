@@ -39,7 +39,7 @@ export const getTasksByType = async (req, res, next) => {
                     .andOnNotNull('tasks.partner_id');
             })
             .orderByRaw("FIELD(tasks.priority, 'Critical', 'High', 'Medium', 'Low')");
-        
+
         if (statusMap[showType] !== null && statusMap[showType] !== undefined) {
             query = query.where('tasks.status', statusMap[showType]);
         } else {
@@ -73,6 +73,10 @@ export const getTasksByType = async (req, res, next) => {
                 })
             );
 
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();
@@ -158,6 +162,10 @@ export const getTasksByPriority = async (req, res, next) => {
                 })
             );
 
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();
@@ -282,7 +290,7 @@ export const getServicesForTask = async (req, res, next) => {
 export const addTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { client, name, service, assignTo, assignDate, dueDate, priority, description, partnerId } = req.body;
+        const { client, name, service, assignTo, assignDate, dueDate, priority, description, partnerId, year_id } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Add Task Request Received", {
@@ -290,7 +298,7 @@ export const addTask = async (req, res, next) => {
             reqdetails: "task-addTask",
         });
 
-        if (!client || !name || !priority || !assignTo) {
+        if (!client || !name || !priority || !assignTo || !year_id) {
             logger.error("Mandatory fields are missing", {
                 username: user_name,
                 reqdetails: "task-addTask",
@@ -307,6 +315,7 @@ export const addTask = async (req, res, next) => {
             .where(function () {
                 this.where('client_id', client)
                     .andWhere('service', service)
+                    .andWhere("year_id", year_id)
             })
             .andWhere('status', '0')
             .first();
@@ -333,7 +342,8 @@ export const addTask = async (req, res, next) => {
             due_date: endDate,
             priority: priority,
             description: description,
-            partner_id: partnerId
+            partner_id: partnerId,
+            year_id: year_id
         });
 
         if (insertTaskResult) {
@@ -390,7 +400,7 @@ export const addTask = async (req, res, next) => {
 export const editTask = async (req, res, next) => {
     let knex = null;
     try {
-        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description, status, partnerId } = req.body;
+        const { task_id, task_name, assignTo, assignDate, dueDate, priority, description, status, partnerId, year_id } = req.body;
         const { dbname, user_name } = req.user;
 
         logger.info("Update Task Request Received", {
@@ -420,7 +430,8 @@ export const editTask = async (req, res, next) => {
             priority: priority,
             description: description,
             status: status,
-            partner_id: partnerId
+            partner_id: partnerId,
+            year_id: year_id
         }).where({ task_id: task_id });
 
         const existingMappings = await knex("employee_task_mapping")
@@ -687,6 +698,10 @@ export const getViewTasks = async (req, res, next) => {
                     .where({ employee_id: task.assignTo[0]["emp_id"] }).first();
                 task["assignTo"][0]["emp_name"] = employee?.name || null;
             }
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();
@@ -777,6 +792,10 @@ export const getLatestTasks = async (req, res, next) => {
                 })
             );
 
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
             const client = await knex("clients")
                 .select("client_name")
                 .where({ client_id: task.client_id }).first();
@@ -872,6 +891,108 @@ export const getPartners = async (req, res, next) => {
             reqdetails: "task-getPartners",
         });
         next(err);
+    } finally {
+        if (knex) {
+            knex.destroy();
+        }
+    }
+};
+
+export const getTasksByClient = async (req, res, next) => {
+    let knex = null;
+    try {
+        const { client_id } = req.body;
+        const { dbname, user_name } = req.user;
+
+        logger.info("Get Task List By Client Request Received", {
+            username: user_name,
+            reqdetails: "task-getTasksByClient",
+        });
+
+        knex = await createKnexInstance(dbname);
+
+        let query = knex('tasks')
+            .select("tasks.*", knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+            .leftJoin('partners', function () {
+                this.on('tasks.partner_id', '=', 'partners.id')
+                    .andOnNotNull('tasks.partner_id');
+            });
+
+        if (client_id && client_id.toString().toLowerCase() != "all") {
+            query = query.where('tasks.client_id', client_id);
+        }
+
+        let viewTaskResult = await query;
+        if (viewTaskResult.length === 0) {
+            for (const task of viewTaskResult) {
+                const mappedData = await knex("employee_task_mapping")
+                    .select("employee_id")
+                    .where({ task_id: task.task_id });
+
+                task["assignTo"] = await Promise.all(
+                    mappedData.map(async (data) => {
+                        const employee = await knex("employees")
+                            .select("name", "photo")
+                            .where({ employee_id: data.employee_id })
+                            .first();
+
+                        return { emp_id: data.employee_id, emp_name: employee?.name, photo: employee?.photo || null };
+                    })
+                );
+            }
+        }
+
+        for (const task of viewTaskResult) {
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
+            const client = await knex("clients")
+                .select("client_name")
+                .where({ client_id: task.client_id }).first();
+            task["client_name"] = client?.client_name || null;
+            const service = await knex("services")
+                .select("service_name")
+                .where({ service_id: task.service }).first();
+            task["service_name"] = service?.service_name || null;
+
+            task["status_name"] = task.status == "0" ? "Pending" : task.status == "1" ? "In-progress" : "Completed";
+
+            const tsData = await knex("time_sheets")
+                .select(
+                    knex.raw("SUM(total_minutes) as total_minutes"),
+                    knex.raw("SEC_TO_TIME(SUM(TIME_TO_SEC(total_time))) as total_time") // Sum of total_time
+                )
+                .where({ "task_id": task.task_id })
+                .first();
+
+            task["total_minutes"] = tsData.total_minutes || 0;
+            task["total_time"] = tsData.total_time || "00:00:00";
+        }
+
+        if (viewTaskResult) {
+            logger.info("Task List By Client Fetched Successfully", {
+                username: user_name,
+                reqdetails: "task-getTasksByClient",
+            });
+            return res.status(200).json({
+                message: "Task List By Client Fetched Successfully",
+                status: true,
+                data: viewTaskResult
+            });
+        } else {
+            logger.error("Failed to fetch Task List By Client", {
+                username: user_name,
+                reqdetails: "task-getTasksByClient",
+            });
+            return res.status(500).json({
+                message: "Failed to fetch Task List By Client",
+                status: false,
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching Task List By Client:", error);
+        next(error);
     } finally {
         if (knex) {
             knex.destroy();

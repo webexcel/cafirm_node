@@ -381,3 +381,9 @@ CREATE TABLE `ca_firm`.`year` (
 
   ALTER TABLE `ca_firm`.`year` 
 CHANGE COLUMN `id` `id` INT NOT NULL AUTO_INCREMENT ;
+
+ALTER TABLE `ca_firm`.`tasks` 
+ADD COLUMN `year_id` INT NOT NULL AFTER `partner_id`;
+
+ALTER TABLE `ca_firm`.`documents` 
+CHANGE COLUMN `type` `task_id` INT NOT NULL ;
