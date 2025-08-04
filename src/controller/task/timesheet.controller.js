@@ -20,19 +20,31 @@ export const getTimesheet = async (req, res, next) => {
             const taskName = await knex("tasks")
                 .select("*")
                 .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
+            if (taskName) {
+                task["task_name"] = taskName?.task_name || null;
+                const client = await knex("clients")
+                    .select("client_name")
+                    .where({ client_id: taskName.client_id }).first();
+                task["client_name"] = client?.client_name || null;
+                const service = await knex("services")
+                    .select("service_name")
+                    .where({ service_id: taskName.service }).first();
+                task["service_name"] = service?.service_name || null;
+                const year = await knex("year")
+                    .select("year")
+                    .where({ id: taskName.year_id }).first();
+                task["year_name"] = year?.year || null;
+            } else {
+                task["task_name"] = null;
+                task["employee_name"] = null;
+                task["client_name"] = null;
+                task["service_name"] = null;
+                task["year_name"] = null;
+            }
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
             task["employee_name"] = employee?.name || null;
-            const client = await knex("clients")
-                .select("client_name")
-                .where({ client_id: taskName.client_id }).first();
-            task["client_name"] = client?.client_name || null;
-            const service = await knex("services")
-                .select("service_name")
-                .where({ service_id: taskName.service }).first();
-            task["service_name"] = service?.service_name || null;
         }
 
         if (getTSRes) {
@@ -87,8 +99,18 @@ export const getTimesheetLimited = async (req, res, next) => {
             const taskName = await knex("tasks")
                 .select("*")
                 .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
-            task["task_description"] = taskName?.description || null;
+            if (taskName) {
+                task["task_name"] = taskName?.task_name || null;
+                task["task_description"] = taskName?.description || null;
+                const year = await knex("year")
+                    .select("year")
+                    .where({ id: taskName.year_id }).first();
+                task["year_name"] = year?.year || null;
+            } else {
+                task["task_name"] = null;
+                task["task_description"] = null;
+                task["year_name"] = null;
+            }
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
@@ -101,6 +123,10 @@ export const getTimesheetLimited = async (req, res, next) => {
                 .select("service_name")
                 .where({ service_id: task.service_id }).first();
             task["service_name"] = service?.service_name || null;
+            const year = await knex("year")
+                .select("year")
+                .where({ id: task.year_id }).first();
+            task["year_name"] = year?.year || null;
         }
 
         if (getTSRes) {
@@ -281,23 +307,23 @@ export const getTaskList = async (req, res, next) => {
 
         const today = knex.raw('DATE(?)', [knex.fn.now()]);
 
-        let query = knex('tasks').select('task_id', 'task_name', knex.raw("DATE_FORMAT(assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
+        let query = knex('tasks').select('tasks.task_id', 'tasks.task_name', knex.raw("DATE_FORMAT(tasks.assigned_date, '%Y-%m-%d') as assigned_date"), knex.raw("DATE_FORMAT(tasks.due_date, '%Y-%m-%d') as due_date"), 'partners.name as partner_name')
             .leftJoin('partners', function () {
                 this.on('tasks.partner_id', '=', 'partners.id')
                     .andOnNotNull('tasks.partner_id');
             })
-            .andWhereNot('status', '3')
+            .andWhereNot('tasks.status', '3')
             .andWhere(function () {
-                this.where('assigned_date', '<=', today)
-                    .andWhere('due_date', '>=', today);
+                this.where('tasks.assigned_date', '<=', today)
+                    .andWhere('tasks.due_date', '>=', today);
             });
 
         if (client_id && client_id.toString().toLowerCase() != "all") {
-            query = query.where({ 'client_id': client_id });
+            query = query.where({ 'tasks.client_id': client_id });
         }
 
         if (service_id && service_id.toString().toLowerCase() != "all") {
-            query = query.where({ 'service': service_id });
+            query = query.where({ 'tasks.service': service_id });
         }
 
         const getTaskRes = await query;
@@ -592,19 +618,30 @@ export const viewTimesheet = async (req, res, next) => {
             const taskName = await knex("tasks")
                 .select("*")
                 .where({ task_id: task.task_id }).first();
-            task["task_name"] = taskName?.task_name || null;
+            if (taskName) {
+                task["task_name"] = taskName?.task_name || null;
+                const client = await knex("clients")
+                    .select("client_name")
+                    .where({ client_id: taskName.client_id }).first();
+                task["client_name"] = client?.client_name || null;
+                const service = await knex("services")
+                    .select("service_name")
+                    .where({ service_id: taskName.service }).first();
+                task["service_name"] = service?.service_name || null;
+                const year = await knex("year")
+                    .select("year")
+                    .where({ id: taskName.year_id }).first();
+                task["year_name"] = year?.year || null;
+            } else {
+                task["task_name"] = null;
+                task["client_name"] = null;
+                task["service_name"] = null;
+                task["year_name"] = null;
+            }
             const employee = await knex("employees")
                 .select("name")
                 .where({ employee_id: task.employee_id }).first();
             task["employee_name"] = employee?.name || null;
-            const client = await knex("clients")
-                .select("client_name")
-                .where({ client_id: taskName.client_id }).first();
-            task["client_name"] = client?.client_name || null;
-            const service = await knex("services")
-                .select("service_name")
-                .where({ service_id: taskName.service }).first();
-            task["service_name"] = service?.service_name || null;
         }
 
         if (getTSRes) {
@@ -708,18 +745,32 @@ export const viewWeeklyTimesheet = async (req, res, next) => {
             const taskName = await knex("tasks")
                 .select("*")
                 .where({ task_id: taskList.task_id }).first();
-            taskList["task_name"] = taskName?.task_name || null;
-            const client = await knex("clients")
-                .select("client_name", "display_name")
-                .where({ client_id: taskName.client_id }).first();
-            taskList["client_id"] = taskName.client_id;
-            taskList["client_name"] = client?.client_name || null;
-            taskList["display_name"] = client?.display_name || null;
-            const service = await knex("services")
-                .select("service_name", "service_short_name")
-                .where({ service_id: taskName.service }).first();
-            taskList["service_name"] = service?.service_name || null;
-            taskList["service_short_name"] = service?.service_short_name || null;
+            if (taskName) {
+                taskList["task_name"] = taskName?.task_name || null;
+                const client = await knex("clients")
+                    .select("client_name", "display_name")
+                    .where({ client_id: taskName.client_id }).first();
+                taskList["client_id"] = taskName.client_id;
+                taskList["client_name"] = client?.client_name || null;
+                taskList["display_name"] = client?.display_name || null;
+                const service = await knex("services")
+                    .select("service_name", "service_short_name")
+                    .where({ service_id: taskName.service }).first();
+                taskList["service_name"] = service?.service_name || null;
+                taskList["service_short_name"] = service?.service_short_name || null;
+                const year = await knex("year")
+                    .select("year")
+                    .where({ id: taskName.year_id }).first();
+                taskList["year_name"] = year?.year || null;
+            } else {
+                taskList["task_name"] = null;
+                taskList["client_id"] = null;
+                taskList["client_name"] = null;
+                taskList["display_name"] = null;
+                taskList["service_name"] = null;
+                taskList["service_short_name"] = null;
+                taskList["year_name"] = null;
+            }
         }
 
         if (tasks) {
