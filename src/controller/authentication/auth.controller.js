@@ -134,21 +134,28 @@ export const resetPassword = async (req, res) => {
 export const getUserDetails = async (req, res, next) => {
   let knex = null;
   try {
-    const { user_name } = req.user;
+    const { email, user_name } = req.user;
 
     logger.info("Get User Details Request Received", {
       username: user_name,
       reqdetails: "getUserDetails",
     });
 
-    if (req.user) {
+    knex = await createKnexInstance();
+
+    const user = await knex("employees")
+      .select("employee_id", "name", "email", "phone", "role", "password_hash", "photo")
+      .where({ email, "status": "0" })
+      .first();
+
+    if (user) {
       logger.info("User Details retrieved successfully", {
         username: user_name,
         reqdetails: "getUserDetails",
       });
       return res.status(200).json({
         message: "User Details retrieved successfully",
-        data: req.user,
+        data: { employee_id: user.employee_id, email: email, name: user.name, role: user.role, photo: user.photo },
         status: true,
       });
     } else {
