@@ -842,7 +842,8 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
                     .where({ time_sheet_id: ts.ts_id })
                     .update({
                         total_time: ts.time,
-                        total_minutes: tot_minutes
+                        total_minutes: tot_minutes,
+                        description: ts.description || null
                     });
             } else if (!ts.ts_id && ts.time != null && ts.time !== "00:00") {
                 const [hours, minutes] = ts.time.split(":").map(Number);
@@ -857,12 +858,14 @@ export const updateWeeklyTimesheet = async (req, res, next) => {
                                 employee_id: emp_id,
                                 date: ts.ts_date,
                                 total_time: ts.time,
-                                total_minutes: tot_minutes
+                                total_minutes: tot_minutes,
+                                description: ts.description || null
                             });
                         } else {
                             return await knex('time_sheets').update({
                                 total_time: ts.time,
-                                total_minutes: tot_minutes
+                                total_minutes: tot_minutes,
+                                description: ts.description || null
                             }).where("time_sheet_id", existingRecord.time_sheet_id);
                         }
                     });
