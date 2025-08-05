@@ -131,3 +131,46 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+export const getUserDetails = async (req, res, next) => {
+  let knex = null;
+  try {
+    const { user_name } = req.user;
+
+    logger.info("Get User Details Request Received", {
+      username: user_name,
+      reqdetails: "getUserDetails",
+    });
+
+    if (req.user) {
+      logger.info("User Details retrieved successfully", {
+        username: user_name,
+        reqdetails: "getUserDetails",
+      });
+      return res.status(200).json({
+        message: "User Details retrieved successfully",
+        data: req.user,
+        status: true,
+      });
+    } else {
+      logger.warn("No User Details found", {
+        username: user_name,
+        reqdetails: "getUserDetails",
+      });
+      return res.status(404).json({
+        message: "No User Details found",
+        status: false,
+      });
+    }
+  } catch (err) {
+    logger.error("Error fetching User Details", {
+      error: err.message,
+      username: req.user?.user_name,
+      reqdetails: "getUserDetails",
+    });
+    next(err);
+  } finally {
+    if (knex) {
+      knex.destroy();
+    }
+  }
+};
