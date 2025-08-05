@@ -13,7 +13,7 @@ export const getEmployeeTimesheet = async (req, res, next) => {
 
         knex = await createKnexInstance(dbname);
 
-        const getClientRes = await knex('time_sheets').select('employee_id', 'employee', 'date', 'total_minutes', 'service_id', 'service').where("status", "0");
+        const getClientRes = await knex('time_sheets').select('employee_id', 'employee', 'date', 'total_minutes', 'service_id', 'service', 'description').where("status", "0");
 
         if (getClientRes) {
             logger.info("Employee Timesheet List retrieved successfully", {
@@ -74,7 +74,7 @@ export const searchEmployeeTimesheet = async (req, res, next) => {
         knex = await createKnexInstance(dbname);
 
         const getClientRes = await knex('time_sheets')
-            .select('employee_id', 'date', 'total_minutes', 'service_id')
+            .select('employee_id', 'date', 'total_minutes', 'service_id', 'description')
             .where('status', '0')
             .where('employee_id', emp_id)
             .whereBetween('date', [start_date, end_date]);
