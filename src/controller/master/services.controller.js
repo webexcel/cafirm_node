@@ -44,7 +44,7 @@ export const getServices = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -121,7 +121,7 @@ export const addService = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -176,7 +176,7 @@ export const editService = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -231,7 +231,7 @@ export const deleteService = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

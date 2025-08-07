@@ -99,7 +99,7 @@ export const getDocuments = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -223,7 +223,7 @@ export const addDocument = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -283,7 +283,7 @@ export const deleteDocument = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -400,7 +400,7 @@ export const downloadDocument = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

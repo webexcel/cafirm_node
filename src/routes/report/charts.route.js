@@ -1,7 +1,9 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getClients, getYearlyEmployeeReport, getMonthlyEmployeeReport, getWeeklyEmployeeReport, getEmployeeReport,
-    getYearlyClientReport, getMonthlyClientReport, getWeeklyClientReport, getClientReport, getTaskByEmployeeId, getTaskByTaskId } from "../../controller/report/charts.controller.js";
+import {
+    getClients, getYearlyEmployeeReport, getMonthlyEmployeeReport, getWeeklyEmployeeReport, getEmployeeReport,
+    getYearlyClientReport, getMonthlyClientReport, getWeeklyClientReport, getClientReport, getTaskByEmployeeId, getTaskByTaskId
+} from "../../controller/report/charts.controller.js";
 
 const chartRoutes = express.Router();
 

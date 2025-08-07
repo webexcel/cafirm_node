@@ -1,7 +1,7 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 
-export const getYearList  = async (req, res, next) => {
+export const getYearList = async (req, res, next) => {
   let knex = null;
   try {
     const { dbname, user_name } = req.user;
@@ -44,7 +44,7 @@ export const getYearList  = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -120,7 +120,7 @@ export const addYear = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -175,7 +175,7 @@ export const editYear = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -230,7 +230,7 @@ export const deleteYear = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

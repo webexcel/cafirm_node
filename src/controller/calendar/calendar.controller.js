@@ -44,7 +44,7 @@ export const getCalendarDetails = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -126,7 +126,7 @@ export const addEvent = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -181,7 +181,7 @@ export const editEvent = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -236,7 +236,7 @@ export const deleteEvent = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

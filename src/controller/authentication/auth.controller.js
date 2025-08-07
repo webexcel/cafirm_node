@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 import sendEmail from "../../utills/SendEmail.js";
 
 export const login = async (req, res, next) => {
+  let knex = null;
   try {
     const { email, password } = req.body;
     logger.info("User is trying to Login", {
@@ -22,7 +23,7 @@ export const login = async (req, res, next) => {
       });
     }
 
-    const knex = await createKnexInstance();
+    knex = await createKnexInstance();
 
     const user = await knex("employees")
       .select("employee_id", "name", "email", "phone", "role", "password_hash", "photo")
@@ -79,9 +80,12 @@ export const login = async (req, res, next) => {
 
   } catch (error) {
     next(error);
+  } finally {
+    if (knex) {
+      await knex.destroy();
+    }
   }
 };
-
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -121,13 +125,14 @@ export const resetPassword = async (req, res) => {
       status: true,
       message: "Password reset successfully",
     });
-
   } catch (error) {
     logger.error("Error resetting password", { error: error.message });
     return res.status(500).json({
       status: false,
       message: "Something went wrong",
     });
+  } finally {
+    if (knex) await knex.destroy();
   }
 };
 
@@ -177,7 +182,7 @@ export const getUserDetails = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

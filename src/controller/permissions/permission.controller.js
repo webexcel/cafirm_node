@@ -1,7 +1,6 @@
 import createKnexInstance from "../../..//configs/db.js";
 import { logger } from "../../../configs/winston.js";
 
-
 export const addPermission = async (req, res, next) => {
   let knex = null;
   try {
@@ -57,7 +56,7 @@ export const addPermission = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -138,7 +137,7 @@ export const assignPermission = async (req, res, next) => {
     });
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -179,7 +178,7 @@ export const getUserPermissions = async (req, res, next) => {
         "o.operation_name",
         "up.granted_at"
       )
-      .where({"up.employee_id": user_id, "m.status": "0"})
+      .where({ "up.employee_id": user_id, "m.status": "0" })
       .orderBy([
         { column: "parent_sequence", order: "asc" },
         { column: "submenu_sequence", order: "asc" },
@@ -259,7 +258,7 @@ export const getUserPermissions = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -326,7 +325,7 @@ export const updatePermission = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -363,7 +362,7 @@ export const getMenuOperations = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -385,7 +384,6 @@ const processMenuOperations = (menuOperations) => {
     };
   });
 };
-
 
 export const getPermissionsList = async (req, res, next) => {
   let knex = null;
@@ -468,7 +466,7 @@ export const getPermissionsList = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -498,7 +496,7 @@ export const getAllUserList = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

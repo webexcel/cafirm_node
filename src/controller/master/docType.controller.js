@@ -44,7 +44,7 @@ export const getDocumentType = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -120,7 +120,7 @@ export const addDocumentType = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -175,7 +175,7 @@ export const editDocumentType = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -230,7 +230,7 @@ export const deleteDocumentType = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

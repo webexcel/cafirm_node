@@ -117,7 +117,7 @@ export const getTasksByType = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -213,7 +213,7 @@ export const getTasksByPriority = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -282,7 +282,7 @@ export const getServicesForTask = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -392,7 +392,7 @@ export const addTask = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -484,7 +484,7 @@ export const editTask = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -539,7 +539,7 @@ export const taskStatusUpdate = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -594,7 +594,7 @@ export const deleteTask = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -750,7 +750,7 @@ export const getViewTasks = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -843,7 +843,7 @@ export const getLatestTasks = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -893,7 +893,7 @@ export const getPartners = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -995,7 +995,7 @@ export const getTasksByClient = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

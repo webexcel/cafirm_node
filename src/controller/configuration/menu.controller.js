@@ -54,7 +54,7 @@ export const getMenuList = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -103,7 +103,7 @@ export const getParentMenuList = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -158,7 +158,7 @@ export const getOperationList = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -220,7 +220,7 @@ export const getOperationMappedList = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -325,7 +325,7 @@ export const addMenu = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -396,7 +396,7 @@ export const addMenuOperations = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -481,7 +481,7 @@ export const updateMenu = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -536,7 +536,7 @@ export const deleteMenu = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

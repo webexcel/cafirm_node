@@ -44,7 +44,7 @@ export const getLeaveList = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -131,7 +131,7 @@ export const addLeave = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -197,7 +197,7 @@ export const updateLeave = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -252,7 +252,7 @@ export const deleteLeave = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -311,7 +311,7 @@ export const updateLeaveStatus = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

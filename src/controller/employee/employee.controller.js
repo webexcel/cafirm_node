@@ -1,8 +1,6 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
 import bcrypt from 'bcrypt';
-import fs from 'fs';
-import path from 'path';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const getEmployees = async (req, res, next) => {
@@ -60,7 +58,7 @@ export const getEmployees = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -138,7 +136,7 @@ export const getEmployeesByPermission = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -222,7 +220,7 @@ export const addEmployee = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -254,21 +252,6 @@ export const editEmployee = async (req, res, next) => {
     let updateResult;
 
     if (key == "photo" && value.startsWith('data:image/')) {
-      // const uploadDir = process.env.Folder_Path + "\\profiles";
-      // if (!fs.existsSync(uploadDir)) {
-      //   fs.mkdirSync(uploadDir, { recursive: true });
-      // }
-
-      // const fileName = `employee_${id}_${Date.now()}.png`;
-      // const filePath = path.join(uploadDir, fileName);
-
-      // const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
-
-      // const buffer = Buffer.from(base64Data, 'base64');
-      // fs.writeFileSync(filePath, buffer);
-
-      // const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
-
       const s3 = new S3Client({
         region: process.env.AWS_REGION,
         credentials: {
@@ -333,7 +316,7 @@ export const editEmployee = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -388,7 +371,7 @@ export const deleteEmployee = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -448,7 +431,7 @@ export const getEmployeeDetails = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -508,7 +491,7 @@ export const updatePassword = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -591,7 +574,7 @@ export const resetPassword = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -621,7 +604,7 @@ export const addUserAccount = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (knex) knex.destroy();
+    if (knex) await knex.destroy();
   }
 };
 
@@ -668,7 +651,7 @@ export const getEmployeesNotPassword = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -729,7 +712,7 @@ export const getUserAccounts = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

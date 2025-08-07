@@ -6,9 +6,9 @@ const PermissionRoutes = express.Router();
 
 PermissionRoutes.use(authenticateJWT)
 
-PermissionRoutes.post('/add',addPermission);
+PermissionRoutes.post('/add', addPermission);
 
-PermissionRoutes.post('/assign',assignPermission);
+PermissionRoutes.post('/assign', assignPermission);
 
 PermissionRoutes.get('/user/:user_id', getUserPermissions);
 

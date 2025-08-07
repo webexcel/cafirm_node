@@ -81,7 +81,7 @@ export const getDashboardData = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

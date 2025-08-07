@@ -80,7 +80,7 @@ export const getTicketsByType = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -164,7 +164,7 @@ export const addTicket = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -223,7 +223,7 @@ export const editTicket = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -278,7 +278,7 @@ export const ticketStatusUpdate = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -333,7 +333,7 @@ export const deleteTicket = async (req, res, next) => {
         next(error);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

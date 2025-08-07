@@ -1,7 +1,9 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getEmployees, getEmployeesByPermission, addEmployee, editEmployee, deleteEmployee, getEmployeeDetails, 
-    updatePassword, resetPassword, addUserAccount, getEmployeesNotPassword, getUserAccounts } from "../../controller/employee/employee.controller.js";
+import {
+    getEmployees, getEmployeesByPermission, addEmployee, editEmployee, deleteEmployee, getEmployeeDetails,
+    updatePassword, resetPassword, addUserAccount, getEmployeesNotPassword, getUserAccounts
+} from "../../controller/employee/employee.controller.js";
 
 const employeeRoutes = express.Router();
 

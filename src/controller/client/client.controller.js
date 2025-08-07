@@ -1,7 +1,5 @@
 import createKnexInstance from "../../../configs/db.js";
 import { logger } from "../../../configs/winston.js";
-import fs from 'fs';
-import path from 'path';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const getClients = async (req, res, next) => {
@@ -47,7 +45,7 @@ export const getClients = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -143,7 +141,7 @@ export const addClient = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -175,21 +173,6 @@ export const editClient = async (req, res, next) => {
     let updateResult;
 
     if (key == "photo" && value.startsWith('data:image/')) {
-      // const uploadDir = process.env.Folder_Path + "\\profiles";
-      // if (!fs.existsSync(uploadDir)) {
-      //   fs.mkdirSync(uploadDir, { recursive: true });
-      // }
-
-      // const fileName = `client_${id}_${Date.now()}.png`;
-      // const filePath = path.join(uploadDir, fileName);
-
-      // const base64Data = value.replace(/^data:image\/\w+;base64,/, "");
-
-      // const buffer = Buffer.from(base64Data, 'base64');
-      // fs.writeFileSync(filePath, buffer);
-
-      // const fileUrl = process.env.File_Path + `/profiles/${fileName}`;
-
       const s3 = new S3Client({
         region: process.env.AWS_REGION,
         credentials: {
@@ -254,7 +237,7 @@ export const editClient = async (req, res, next) => {
     next(error);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -309,7 +292,7 @@ export const deleteClient = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };
@@ -369,7 +352,7 @@ export const getClientDetails = async (req, res, next) => {
     next(err);
   } finally {
     if (knex) {
-      knex.destroy();
+      await knex.destroy();
     }
   }
 };

@@ -62,7 +62,7 @@ export const getClients = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -163,7 +163,7 @@ export const getYearlyEmployeeReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -281,7 +281,7 @@ export const getMonthlyEmployeeReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -395,7 +395,6 @@ export const getWeeklyEmployeeReport = async (req, res, next) => {
                 status: false,
             });
         }
-
     } catch (err) {
         logger.error("Error fetching Employee Weekly Report Data", {
             error: err.message,
@@ -405,7 +404,7 @@ export const getWeeklyEmployeeReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -444,10 +443,6 @@ export const getEmployeeReport = async (req, res, next) => {
                     .andOn('ts.employee_id', '=', 'etm.employee_id')
             })
             .select(
-                // 't.task_id',
-                // 't.task_name',
-                // 't.client_id',
-                // 't.service',
                 't.*',
                 knex.raw('IFNULL(SUM(ts.total_minutes), 0) as total_time')
             )
@@ -542,7 +537,7 @@ export const getEmployeeReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -641,7 +636,7 @@ export const getYearlyClientReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -757,7 +752,7 @@ export const getMonthlyClientReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -878,11 +873,10 @@ export const getWeeklyClientReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
-
 
 export const getClientReport = async (req, res, next) => {
     let knex = null;
@@ -916,10 +910,6 @@ export const getClientReport = async (req, res, next) => {
                 this.on('ts.task_id', '=', 't.task_id')
             })
             .select(
-                // 't.task_id',
-                // 't.task_name',
-                // 't.client_id',
-                // 't.service',
                 't.*',
                 knex.raw('IFNULL(SUM(ts.total_minutes), 0) as total_time')
             )
@@ -1013,7 +1003,7 @@ export const getClientReport = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -1080,7 +1070,7 @@ export const getTaskByEmployeeId = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };
@@ -1111,7 +1101,7 @@ export const getTaskByTaskId = async (req, res, next) => {
 
         const getTaskByTaskIdRes = await knex("time_sheets").select('*').where({ task_id: task_id });
 
-         for (const taskList of getTaskByTaskIdRes) {
+        for (const taskList of getTaskByTaskIdRes) {
             const taskName = await knex("tasks")
                 .select("*")
                 .where({ task_id: taskList.task_id }).first();
@@ -1147,7 +1137,7 @@ export const getTaskByTaskId = async (req, res, next) => {
         next(err);
     } finally {
         if (knex) {
-            knex.destroy();
+            await knex.destroy();
         }
     }
 };

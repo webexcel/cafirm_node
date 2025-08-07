@@ -1,7 +1,9 @@
 import express from "express";
 import { authenticateJWT } from "../../middleware/verifyToken.js";
-import { getTasksByType, getTasksByPriority, getServicesForTask, addTask, editTask, taskStatusUpdate, deleteTask, 
-    getViewTasks, getLatestTasks, getPartners, getTasksByClient } from "../../controller/task/task.controller.js";
+import {
+    getTasksByType, getTasksByPriority, getServicesForTask, addTask, editTask, taskStatusUpdate, deleteTask,
+    getViewTasks, getLatestTasks, getPartners, getTasksByClient
+} from "../../controller/task/task.controller.js";
 
 const taskRoutes = express.Router();
 
