@@ -18,6 +18,7 @@ import chartRoutes from "./report/charts.route.js";
 import documentManagementRoutes from "./documentManagement/documentManagement.route.js";
 import docTypeRoutes from "./master/docType.route.js";
 import yearRoutes from "./master/year.route.js";
+import clientTypeRoutes from "./master/clientType.route.js";
 
 const mainRoutes = express.Router();
 
@@ -58,5 +59,7 @@ mainRoutes.use("/document", documentManagementRoutes);
 mainRoutes.use("/master/documenttype", docTypeRoutes);
 
 mainRoutes.use("/master/year", yearRoutes);
+
+mainRoutes.use("/master/clienttype", clientTypeRoutes);
 
 export default mainRoutes;

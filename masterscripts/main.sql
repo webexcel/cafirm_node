@@ -387,3 +387,10 @@ ADD COLUMN `year_id` INT NOT NULL AFTER `partner_id`;
 
 ALTER TABLE `ca_firm`.`documents` 
 CHANGE COLUMN `type` `task_id` INT NOT NULL ;
+
+------------------09-08-2025----------------------
+CREATE TABLE `ca_firm`.`client_type` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(150) NOT NULL,
+  `status` ENUM('0', '1') NULL DEFAULT '0',
+  PRIMARY KEY (`id`));
