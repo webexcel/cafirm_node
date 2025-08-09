@@ -16,6 +16,17 @@ export const getClients = async (req, res, next) => {
 
     const getClientRes = await knex('clients').select('*').where("status", "0");
 
+    for (const element of getClientRes) {
+      if (element.client_type) {
+        const clientType = await knex('client_type')
+          .select('type_name')
+          .where({ id: element.client_type })
+          .first();
+
+        element.client_type_name = clientType ? clientType.type_name : "";
+      }
+    }
+
     if (getClientRes) {
       logger.info("Clients List retrieved successfully", {
         username: user_name,
